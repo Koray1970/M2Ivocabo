@@ -28,26 +28,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        scanOptions = ScanOptions()
-        scanOptions!!.setDesiredBarcodeFormats(ScanOptions.QR_CODE)
-        scanOptions!!.setPrompt("Scanning Barcode")
-        scanOptions!!.setCameraId(0)
-        scanOptions!!.setBarcodeImageEnabled(true)
-        scanOptions!!.setBeepEnabled(true)
 
-
-        btnaddbeacon = findViewById(R.id.btnaddbeacon) as Button
-        btnaddbeacon!!.setOnClickListener {
-
-
-            barcodeLauncher.launch(scanOptions)
-
-        }
 
 
         val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as? SupportMapFragment
         mapFragment?.getMapAsync(this)
     }
+
     private val barcodeLauncher = registerForActivityResult(
         ScanContract()
     ) { result: ScanIntentResult ->
@@ -59,6 +46,32 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+    private fun SetBarcodeScanning() {
+        scanOptions = ScanOptions()
+        scanOptions!!.setDesiredBarcodeFormats(ScanOptions.QR_CODE)
+        scanOptions!!.setPrompt("Scanning Barcode")
+        scanOptions!!.setCameraId(0)
+        scanOptions!!.setBarcodeImageEnabled(true)
+        scanOptions!!.setBeepEnabled(true)
+
+
+        btnaddbeacon = findViewById(R.id.btnaddbeacon) as Button
+        btnaddbeacon!!.setOnClickListener {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    android.Manifest.permission.CAMERA
+                ) == PackageManager.PERMISSION_GRANTED
+            )
+                barcodeLauncher.launch(scanOptions)
+            else {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(android.Manifest.permission.CAMERA),
+                    100
+                )
+            }
+        }
+    }
 
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
@@ -111,23 +124,4 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
 
-    //start::Scanner events-->
-    private fun ScannerOnClick() {
-        if (ContextCompat.checkSelfPermission(
-                this,
-                android.Manifest.permission.CAMERA
-            ) == PackageManager.PERMISSION_GRANTED
-        )
-            barcodeLauncher.launch(scanOptions)
-        else {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(android.Manifest.permission.CAMERA),
-                100
-            )
-        }
-    }
-
-
-    //end::Scanner events-->
 }
