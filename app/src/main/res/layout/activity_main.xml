@@ -9,11 +9,6 @@
     tools:context=".MainActivity"
     android:orientation="vertical">
 
-    <com.journeyapps.barcodescanner.DecoratedBarcodeView
-        android:id="@+id/barcodeView"
-        android:layout_width="match_parent"
-        android:layout_height="135dp"
-        app:zxing_scanner_layout="@la" />
     <fragment xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"
         android:id="@+id/map"
@@ -39,7 +34,7 @@
             android:text="Devıces" />
 
         <Button
-            android:id="@+id/button"
+            android:id="@+id/btnaddbeacon"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="0.6"

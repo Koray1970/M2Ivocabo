@@ -1,10 +1,11 @@
 package com.example.m2ivocabo
 
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.text.Layout
+import android.widget.Button
 import android.widget.Toast
+import androidx.activity.result.ActivityResultCallback
+import androidx.activity.result.ActivityResultLauncher
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -13,29 +14,51 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
-import com.journeyapps.barcodescanner.BarcodeCallback
-import com.journeyapps.barcodescanner.BarcodeResult
-import com.journeyapps.barcodescanner.BarcodeView
-import com.journeyapps.barcodescanner.CaptureManager
+import com.journeyapps.barcodescanner.*
+
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private var permissionDenied = false
     private lateinit var map: GoogleMap
-    private var barcodeView: BarcodeView? = null
+    private var scanOptions: ScanOptions? = null
+    private var btnaddbeacon: Button? = null
 
-    lateinit var captureManager: CaptureManager
     private val LOCATION_PERMISSION_REQUEST_CODE = 100
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        barcodeView = findViewById(R.id.barcodeView) as BarcodeView
-        var captureManager = CaptureManager(this, barcodeView)
-        captureManager.initializeFromIntent(intent, savedInstanceState)
+        scanOptions = ScanOptions()
+        scanOptions!!.setDesiredBarcodeFormats(ScanOptions.QR_CODE)
+        scanOptions!!.setPrompt("Scanning Barcode")
+        scanOptions!!.setCameraId(0)
+        scanOptions!!.setBarcodeImageEnabled(true)
+        scanOptions!!.setBeepEnabled(true)
+
+
+        btnaddbeacon = findViewById(R.id.btnaddbeacon) as Button
+        btnaddbeacon!!.setOnClickListener {
+
+
+            barcodeLauncher.launch(scanOptions)
+
+        }
+
 
         val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as? SupportMapFragment
         mapFragment?.getMapAsync(this)
     }
+    private val barcodeLauncher = registerForActivityResult(
+        ScanContract()
+    ) { result: ScanIntentResult ->
+        if (result.contents == null) {
+            Toast.makeText(this, "Cancelled", Toast.LENGTH_LONG).show()
+        } else {
+            Toast.makeText(this, "Scanned: " + result.contents, Toast.LENGTH_LONG)
+                .show()
+        }
+    }
+
 
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
@@ -90,16 +113,19 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     //start::Scanner events-->
     private fun ScannerOnClick() {
-
-
-        barcodeView.decodeSingle(object : BarcodeCallback {
-            override fun barcodeResult(result: BarcodeResult?) {
-                result?.let {
-                    Toast.makeText(baseContext, "Result : " + it.text, Toast.LENGTH_SHORT).show()
-                }
-            }
-        })
-
+        if (ContextCompat.checkSelfPermission(
+                this,
+                android.Manifest.permission.CAMERA
+            ) == PackageManager.PERMISSION_GRANTED
+        )
+            barcodeLauncher.launch(scanOptions)
+        else {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(android.Manifest.permission.CAMERA),
+                100
+            )
+        }
     }
 
 
