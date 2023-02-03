@@ -1,7 +1,11 @@
 package com.example.m2ivocabo
 
+import android.content.Context
 import android.content.DialogInterface
 import android.content.pm.PackageManager
+import android.location.Location
+import android.location.LocationManager
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
@@ -9,11 +13,16 @@ import android.view.WindowManager
 import android.widget.Button
 import android.widget.PopupMenu.OnDismissListener
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.getSystemService
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.LocationSource.OnLocationChangedListener
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
@@ -21,9 +30,10 @@ import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.journeyapps.barcodescanner.*
 import java.util.zip.Inflater
+import kotlin.coroutines.suspendCoroutine
 
 
-class MainActivity : AppCompatActivity(), OnMapReadyCallback {
+class MainActivity : AppCompatActivity(), OnMapReadyCallback, OnLocationChangedListener {
     private var permissionDenied = false
     private lateinit var map: GoogleMap
     private var scanOptions: ScanOptions? = null
@@ -31,9 +41,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     var addBeaconBuilder: MaterialAlertDialogBuilder? = null
     var addBeaconDialog: AlertDialog? = null
     private val LOCATION_PERMISSION_REQUEST_CODE = 100
+    private var latlng: LatLng? = null
+    private var fusedLocationProviderClient: FusedLocationProviderClient? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        fusedLocationProviderClient=LocationServices.getFusedLocationProviderClient(this)
+
 
         MaterialAlertDialogBuilder_OnInit()
         val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as? SupportMapFragment
@@ -74,9 +89,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             )
         }
     }
+
     //end::Barcode Scanner event init
     //start::MaterialAlertDialog events
-    fun MaterialAlertDialogBuilder_OnInit(){
+    fun MaterialAlertDialogBuilder_OnInit() {
         var addDeviceChooseType: View =
             layoutInflater.inflate(R.layout.fragment_add_device_choose_type, null)
 
@@ -107,6 +123,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         };
 
     }
+
     //end::MaterialAlertDialog events
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
@@ -156,6 +173,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             ),
             LOCATION_PERMISSION_REQUEST_CODE
         )
+    }
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    override fun onLocationChanged(p0: Location) {
+        if (p0.isComplete) {
+            latlng = LatLng(p0.latitude, p0.longitude)
+        }
     }
 
 
