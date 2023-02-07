@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <style name="App.MainListTitle" parent="TextAppearance.Material3.DisplayLarge">
         <item name="android:textStyle">bold</item>
         <item name="android:textAllCaps">true</item>
@@ -8,9 +9,28 @@
         <item name="android:letterSpacing">0</item>
         <item name="android:paddingLeft">5dp</item>
     </style>
-    <style name="myFullscreenAlertDialogStyle" parent="Theme.AppCompat.Light.NoActionBar">      //no actionbar, but status bar exists
-        <item name="android:windowFullscreen">true</item>                       //remove status bar
-        <item name="android:windowAnimationStyle">@android:style/Animation.Dialog</item>        //smooth animation
 
+    <style name="appAlertDialogStyle" parent="ThemeOverlay.Material3.MaterialAlertDialog.Centered">
+        //no actionbar, but status bar exists
+        <item name="colorSurface">@color/md_theme_dark_surfaceVariant</item>
+        <item name="android:background">@color/md_theme_dark_scrim</item>
+        <!--<item name="android:windowFullscreen">true</item>-->//remove status bar
+        <item name="android:windowAnimationStyle">@android:style/Animation.Dialog</item>
+        //smooth animation
+    </style>
+
+    <style name="Widget.Theme.M2Ivocabo.ButtonBar.Fullscreen" parent="">
+        <item name="android:background">@color/black_overlay</item>
+        <item name="android:buttonBarStyle">?android:attr/buttonBarStyle</item>
+    </style>
+    <style name="formtitle" parent="">
+        <item name="android:textColor">@color/md_theme_light_surface</item>
+        <item name="android:textSize">22dp</item>
+        <item name="android:textFontWeight">900</item>
+        <item name="android:layout_marginBottom">10dp</item>
+    </style>
+    <style name="formelmtitle" parent="">
+        <item name="android:textColor">@color/md_theme_light_surface</item>
+        <item name="android:textSize">14dp</item>
     </style>
 </resources>

@@ -17,19 +17,23 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Add New Device" />
+            style="@style/formtitle"
+            android:text="@string/form_addnewdevice_title" />
 
         <TextView
             android:id="@+id/textView2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="MAC Address" />
+            style="@style/formelmtitle"
+            android:text="@string/form_macaddres" />
 
         <EditText
             android:id="@+id/txtmacaddress"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:ems="10"
+            android:clickable="false"
+            android:textColor="@color/md_theme_light_surface"
             android:inputType="textPersonName"
             android:text="" />
 
@@ -37,7 +41,8 @@
             android:id="@+id/textView3"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Device Name :" />
+            style="@style/formelmtitle"
+            android:text="@string/form_devicename" />
 
         <EditText
             android:id="@+id/txtdevicename"
@@ -45,24 +50,28 @@
             android:layout_height="wrap_content"
             android:ems="10"
             android:inputType="textPersonName"
+            android:textColor="@color/md_theme_light_surface"
             android:text="" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:layout_marginTop="20dp"
+            >
 
             <Button
                 android:id="@+id/btncancel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Cancel" />
+                android:layout_marginRight="10dp"
+                android:text="@string/btncancel" />
 
             <Button
                 android:id="@+id/btnsubmit"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Save" />
+                android:text="@string/btnsave" />
         </LinearLayout>
     </LinearLayout>
 
