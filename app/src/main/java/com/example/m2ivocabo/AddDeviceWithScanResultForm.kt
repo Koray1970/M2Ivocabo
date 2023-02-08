@@ -57,7 +57,13 @@ class AddDeviceWithScanResultForm : Fragment() {
 
         var txtdevicename = view.findViewById<EditText>(R.id.txtdevicename)
 
-
+        val fragManager = requireActivity().supportFragmentManager
+        val transaction = fragManager.beginTransaction()
+        transaction.replace(
+            R.id.flmainframe,
+            Dashboard()
+        )
+        transaction.addToBackStack(null)
 
         var btnsubmit = view.findViewById<Button>(R.id.btnsubmit)
         btnsubmit.setOnClickListener {
@@ -81,18 +87,13 @@ class AddDeviceWithScanResultForm : Fragment() {
                         latlng = latlng
                     )
                 )
+                transaction.commit()
             }
         }
         var btncancel = view.findViewById<Button>(R.id.btncancel)
         btncancel.setOnClickListener {
 
-            val fragManager = requireActivity().supportFragmentManager
-            val transaction = fragManager.beginTransaction()
-            transaction.replace(
-                R.id.flmainframe,
-               Dashboard()
-            )
-            transaction.addToBackStack(null) // if u want this fragment to stay in stack specify it
+
             transaction.commit()
         }
         return inflater.inflate(
