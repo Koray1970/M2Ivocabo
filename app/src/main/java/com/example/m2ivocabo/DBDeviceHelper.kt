@@ -56,25 +56,36 @@ class DBDeviceHelper(context: Context) :
     }
 
     fun deviceList(): ArrayList<DeviceItem>? {
+        val deviceitems: ArrayList<DeviceItem> = ArrayList<DeviceItem>()
         val db = this.readableDatabase
-        var dbset = db.rawQuery("SELECT * FROM " + TABLE_NAME + "ORDER BY name ASC", null)
+        var dbset = db.rawQuery("SELECT * FROM " + TABLE_NAME + " ORDER BY name ASC", null)
+        dbset.moveToFirst()
         if (dbset != null) {
             try {
-                var deviceitems: ArrayList<DeviceItem> = ArrayList<DeviceItem>()
+
+                val cl_id=getColumnIndex(dbset, ID)
+                val cl_name=getColumnIndex(dbset, NAME)
+                var cl_code=getColumnIndex(dbset, CODE)
+                var cl_codetype=getColumnIndex(dbset, CODETYPE)
+                val cl_latlng=getColumnIndex(dbset, LATLNG)
                 do {
                     var deviceItem = DeviceItem(
-                        dbset.getInt(getColumnIndex(dbset, ID)),
-                        dbset.getString(getColumnIndex(dbset, NAME)),
-                        dbset.getString(getColumnIndex(dbset, CODE)),
-                        DeviceCodeType.values().get(dbset.getInt(getColumnIndex(dbset, CODETYPE))),
-                        dbset.getString(getColumnIndex(dbset, LATLNG))
+                        id=dbset.getInt(cl_id),
+                        name=dbset.getString(cl_name),
+                        code = dbset.getString(cl_code),
+                        codetype = DeviceCodeType.values().get(dbset.getInt(cl_codetype)),
+                        latlng = dbset.getString(cl_latlng)
                     )
+
                     deviceitems.add(deviceItem)
                 } while (dbset.moveToNext())
-            } catch (exception: Exception) {
 
+            } catch (exception: Exception) {
+                var error=exception.message
             } finally {
                 dbset.close()
+                if(deviceitems.size>0)
+                    return deviceitems
             }
 
         }

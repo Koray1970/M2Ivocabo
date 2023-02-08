@@ -12,6 +12,7 @@ import android.os.Handler
 import android.os.Looper
 import android.view.*
 import android.widget.Button
+import android.widget.ListView
 import android.widget.Toast
 import androidx.annotation.RequiresPermission
 import androidx.appcompat.app.AlertDialog
@@ -21,6 +22,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.replace
 import androidx.fragment.app.setFragmentResult
+import androidx.recyclerview.widget.RecyclerView
 import com.example.m2ivocabo.databinding.FragmentDashboardBinding
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -119,6 +121,8 @@ class Dashboard : Fragment(), OnMapReadyCallback {
         fusedLocationProviderClient= LocationServices.getFusedLocationProviderClient(this.requireActivity())
         val mapFragment = this.requireActivity().supportFragmentManager.findFragmentById(R.id.map) as? SupportMapFragment
         mapFragment?.getMapAsync(this)
+
+        GetDeviceList_OnInit()
         visible = true
 
     }
@@ -126,7 +130,7 @@ class Dashboard : Fragment(), OnMapReadyCallback {
     override fun onResume() {
         super.onResume()
         activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
-
+        GetDeviceList_OnInit()
         // Trigger the initial hide() shortly after the activity has been
         // created, to briefly hint to the user that UI controls
         // are available.
@@ -357,5 +361,15 @@ class Dashboard : Fragment(), OnMapReadyCallback {
             ),
             LOCATION_PERMISSION_REQUEST_CODE
         )
+    }
+    fun GetDeviceList_OnInit(){
+        var dbDeviceHelper=DBDeviceHelper(requireContext())
+        val devicelist=dbDeviceHelper.deviceList()
+        if(devicelist!=null && devicelist.size>0){
+            val rvdevice=requireActivity().findViewById<ListView>(R.id.rcvdevicelist)
+            val adapter=DeviceListAdapter(requireContext(),devicelist)
+            rvdevice.adapter=adapter
+            adapter.notifyDataSetChanged()
+        }
     }
 }

@@ -48,9 +48,14 @@
         android:background="?android:attr/listDivider"
         android:backgroundTint="@color/cardview_light_background" />
 
-    <androidx.recyclerview.widget.RecyclerView
+    <ListView
         android:id="@+id/rcvdevicelist"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="wrap_content" />
+
+    <!--<androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rcvdevicelist"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />-->
 
 </LinearLayout>
