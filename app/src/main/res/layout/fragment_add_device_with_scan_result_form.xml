@@ -35,6 +35,7 @@
             android:clickable="false"
             android:textColor="@color/md_theme_light_surface"
             android:inputType="textPersonName"
+            android:contentDescription="@string/form_macaddres"
             android:text="" />
 
         <TextView
@@ -51,6 +52,7 @@
             android:ems="10"
             android:inputType="textPersonName"
             android:textColor="@color/md_theme_light_surface"
+            android:contentDescription="@string/form_devicename"
             android:text="" />
 
         <LinearLayout
@@ -65,7 +67,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginRight="10dp"
-                android:text="@string/btncancel" />
+                android:text="@string/btncancel"
+
+                />
 
             <Button
                 android:id="@+id/btnsubmit"
@@ -74,5 +78,4 @@
                 android:text="@string/btnsave" />
         </LinearLayout>
     </LinearLayout>
-
 </FrameLayout>

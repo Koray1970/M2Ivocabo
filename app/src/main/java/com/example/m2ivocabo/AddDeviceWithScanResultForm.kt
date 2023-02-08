@@ -11,11 +11,16 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import androidx.core.os.bundleOf
+import androidx.navigation.Navigation
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.maps.model.LatLng
+import com.google.gson.Gson
+import kotlin.reflect.typeOf
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
 private const val ARG_MACADDRESS = "macaddress"
-private const val ARG_PARAM2 = "param2"
+private const val ARG_LATLNG = "latlng"
 
 /**
  * A simple [Fragment] subclass.
@@ -25,14 +30,16 @@ private const val ARG_PARAM2 = "param2"
 class AddDeviceWithScanResultForm : Fragment() {
     // TODO: Rename and change types of parameters
     private var macaddress: String? = null
-    private var param2: String? = null
+    private var latlng: String? = null
+    private var latLng: LatLng? = null
     private var TAG: String = AddDeviceWithScanResultForm.javaClass.simpleName
+    var gson = Gson()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
             macaddress = it.getString(ARG_MACADDRESS)
-            param2 = it.getString(ARG_PARAM2)
+            latlng = it.getString(ARG_LATLNG)
         }
     }
 
@@ -43,22 +50,51 @@ class AddDeviceWithScanResultForm : Fragment() {
         // Inflate the layout for this fragment
         var view = inflater.inflate(R.layout.fragment_add_device_with_scan_result_form, container)
         var txtmacaddress = view.findViewById<EditText>(R.id.txtmacaddress)
-        txtmacaddress.isClickable=false
-        txtmacaddress.isEnabled=false
+        txtmacaddress.isClickable = false
+        txtmacaddress.isEnabled = false
+        macaddress=AppHelper().StringToMacaddress(macaddress.toString())
         txtmacaddress?.setText(macaddress)
 
-        var txtdevicename=view.findViewById<EditText>(R.id.txtdevicename)
+        var txtdevicename = view.findViewById<EditText>(R.id.txtdevicename)
+
+
+
         var btnsubmit = view.findViewById<Button>(R.id.btnsubmit)
         btnsubmit.setOnClickListener {
-            if(txtmacaddress.text.isNullOrEmpty()){
-                txtmacaddress.setError("no text")
-            }
-            if(txtdevicename.text.isNullOrEmpty()){
-                var errormessage=R.string.form_pleaseinputdevicename.toString();
-                txtdevicename.setError(errormessage)
+            if (txtmacaddress.text.isNullOrEmpty() || txtdevicename.text.isNullOrEmpty()) {
+                if (txtmacaddress.text.isNullOrEmpty()) {
+                    txtmacaddress.setError("no text")
+                }
+                if (txtdevicename.text.isNullOrEmpty()) {
+                    var errormessage = R.string.form_pleaseinputdevicename.toString();
+                    txtdevicename.setError(errormessage)
+                }
+            } else {
+                var dbevent = DBDeviceHelper(requireContext())
+
+                dbevent.addDevice(
+                    DeviceItem(
+                        id = null,
+                        code = txtmacaddress.text.toString(),
+                        name = txtdevicename.text.toString(),
+                        codetype = DeviceCodeType.MACADDRESS,
+                        latlng = latlng
+                    )
+                )
             }
         }
+        var btncancel = view.findViewById<Button>(R.id.btncancel)
+        btncancel.setOnClickListener {
 
+            val fragManager = requireActivity().supportFragmentManager
+            val transaction = fragManager.beginTransaction()
+            transaction.replace(
+                R.id.flmainframe,
+               Dashboard()
+            )
+            transaction.addToBackStack(null) // if u want this fragment to stay in stack specify it
+            transaction.commit()
+        }
         return inflater.inflate(
             R.layout.fragment_add_device_with_scan_result_form,
             container,
@@ -81,7 +117,7 @@ class AddDeviceWithScanResultForm : Fragment() {
             AddDeviceWithScanResultForm().apply {
                 arguments = Bundle().apply {
                     putString(ARG_MACADDRESS, param1)
-                    putString(ARG_PARAM2, param2)
+                    putString(ARG_LATLNG, param2)
                 }
             }
     }

@@ -7,16 +7,17 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.view.ViewDebug.IntToString
 import androidx.annotation.Nullable
-
-class DBDeviceHelper(context: Context, factory: SQLiteDatabase.CursorFactory) :
-    SQLiteOpenHelper(context, DATABASE_NAME, factory, DATABASE_VERSION) {
+//, factory: SQLiteDatabase.CursorFactory?
+class DBDeviceHelper(context: Context) :
+    SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
+    var _context=context
     override fun onCreate(db: SQLiteDatabase?) {
-        val query = ("CREATE TABLE " + TABLE_NAME + " ("
-                + "id" + " INTEGER PRIMARY KEY, " +
-                "name" + " TEXT," +
-                "code" + " TEXT" +
-                "codetype" + " INTEGER" + ")")
-
+        val query = ("CREATE TABLE " + TABLE_NAME + " (" +
+                ID + " INTEGER PRIMARY KEY , " +
+                NAME + " TEXT, " +
+                CODE + " TEXT, " +
+                CODETYPE + " INTEGER , " +
+                LATLNG + " TEXT)")
         db?.execSQL(query)
     }
 
@@ -30,7 +31,7 @@ class DBDeviceHelper(context: Context, factory: SQLiteDatabase.CursorFactory) :
         values.put(NAME, deviceItem.name)
         values.put(CODE, deviceItem.code)
         values.put(CODETYPE, deviceItem.codetype.ordinal)
-
+        values.put(LATLNG, deviceItem.latlng)
         val db = this.writableDatabase
         db.insert(TABLE_NAME, null, values)
         db.close()
@@ -41,6 +42,7 @@ class DBDeviceHelper(context: Context, factory: SQLiteDatabase.CursorFactory) :
         values.put(NAME, deviceItem.name)
         values.put(CODE, deviceItem.code)
         values.put(CODETYPE, deviceItem.codetype.ordinal)
+        values.put(LATLNG, deviceItem.latlng)
 
         val db = this.writableDatabase
         db.update(TABLE_NAME, values, "id=$deviceItem.id", arrayOf("id"))
@@ -58,17 +60,17 @@ class DBDeviceHelper(context: Context, factory: SQLiteDatabase.CursorFactory) :
         var dbset = db.rawQuery("SELECT * FROM " + TABLE_NAME + "ORDER BY name ASC", null)
         if (dbset != null) {
             try {
-                var deviceitems:ArrayList<DeviceItem> = ArrayList<DeviceItem>()
-                do{
+                var deviceitems: ArrayList<DeviceItem> = ArrayList<DeviceItem>()
+                do {
                     var deviceItem = DeviceItem(
                         dbset.getInt(getColumnIndex(dbset, ID)),
                         dbset.getString(getColumnIndex(dbset, NAME)),
                         dbset.getString(getColumnIndex(dbset, CODE)),
                         DeviceCodeType.values().get(dbset.getInt(getColumnIndex(dbset, CODETYPE))),
-                        dbset.getString(getColumnIndex(dbset, LATLNG)))
+                        dbset.getString(getColumnIndex(dbset, LATLNG))
+                    )
                     deviceitems.add(deviceItem)
-                }
-                while (dbset.moveToNext())
+                } while (dbset.moveToNext())
             } catch (exception: Exception) {
 
             } finally {
@@ -103,7 +105,7 @@ class DBDeviceHelper(context: Context, factory: SQLiteDatabase.CursorFactory) :
     }
 
     companion object {
-        private var DATABASE_NAME: String = "ivocabodb"
+        private var DATABASE_NAME: String = "ivocabodb.db"
         private val DATABASE_VERSION: Int = 1
         private val TABLE_NAME: String = "devicelist"
         private val ID: String = "id"

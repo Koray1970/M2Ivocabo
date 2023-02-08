@@ -1,15 +1,19 @@
 package com.example.m2ivocabo
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.Location
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.*
 import android.widget.Button
 import android.widget.Toast
+import androidx.annotation.RequiresPermission
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -20,13 +24,18 @@ import androidx.fragment.app.setFragmentResult
 import com.example.m2ivocabo.databinding.FragmentDashboardBinding
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.LocationSource
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.tasks.CancellationToken
+import com.google.android.gms.tasks.CancellationTokenSource
+import com.google.android.gms.tasks.OnCompleteListener
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.gson.Gson
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanIntentResult
 import com.journeyapps.barcodescanner.ScanOptions
@@ -92,6 +101,7 @@ class Dashboard : Fragment(), OnMapReadyCallback {
     private var latlng: LatLng? = null
     private var fusedLocationProviderClient: FusedLocationProviderClient? = null
     private val LOCATION_PERMISSION_REQUEST_CODE = 100
+    private val gson=Gson()
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -203,26 +213,47 @@ class Dashboard : Fragment(), OnMapReadyCallback {
 
 
     //start::Barcode Scanner event init
+    @SuppressLint("MissingPermission")
+    @RequiresPermission(anyOf = arrayOf(android.Manifest.permission.ACCESS_COARSE_LOCATION,android.Manifest.permission.ACCESS_FINE_LOCATION))
     private val barcodeLauncher = registerForActivityResult(
         ScanContract()
     ) { result: ScanIntentResult ->
         if (result.contents == null) {
             Toast.makeText(this.requireActivity(), "Cancelled", Toast.LENGTH_LONG).show()
         } else {
-            var intent=Intent(this.requireContext(),AddDeviceWithScanResultForm::class.java)
-            intent.putExtra("macaddress", result.contents)
-            val bundle = Bundle()
-            bundle.putString("macaddress", result.contents)
-            var addDeviceWithScanResultForm=AddDeviceWithScanResultForm()
-            addDeviceWithScanResultForm.arguments=bundle
+            if(ActivityCompat.checkSelfPermission(requireContext() ,android.Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(requireContext() ,android.Manifest.permission.ACCESS_COARSE_LOCATION)==PackageManager.PERMISSION_GRANTED
+            ) {
+                fusedLocationProviderClient?.getCurrentLocation(
+                    Priority.PRIORITY_BALANCED_POWER_ACCURACY,
+                    CancellationTokenSource().token)
+                    ?.addOnCompleteListener(OnCompleteListener {
+                        var intent = Intent(this.requireContext(), AddDeviceWithScanResultForm::class.java)
+                        intent.putExtra("macaddress", result.contents)
+                        latlng= LatLng(it.result.latitude,it.result.longitude)
+                        var _latlng=gson.toJson(latlng)
+                        intent.putExtra("latlng", _latlng)
+                        val bundle = Bundle()
+                        bundle.putString("macaddress", result.contents)
+                        bundle.putString("latlng", _latlng)
+                        var addDeviceWithScanResultForm = AddDeviceWithScanResultForm()
+                        addDeviceWithScanResultForm.arguments = bundle
 
-            val fragmentTransaction = this.requireActivity().supportFragmentManager.beginTransaction()
-            fragmentTransaction.add(R.id.flmainframe, addDeviceWithScanResultForm,"AddDeviceScanResultForm")
-            fragmentTransaction.addToBackStack(null)
-            fragmentTransaction.commit()
+                        val fragmentTransaction =
+                            this.requireActivity().supportFragmentManager.beginTransaction()
+                        fragmentTransaction.add(
+                                R.id.flmainframe,
+                                addDeviceWithScanResultForm,
+                                "AddDeviceScanResultForm"
+                        )
+                        fragmentTransaction.addToBackStack(null)
+                        fragmentTransaction.commit()
+                    })
 
-            /*Toast.makeText(this.requireActivity(), "Scanned: " + result.contents, Toast.LENGTH_LONG)
-                .show()*/
+            }
+            else{
+                shouldShowRequestPermissionRationale(android.Manifest.permission.ACCESS_FINE_LOCATION)
+            }
         }
     }
 
@@ -287,7 +318,7 @@ class Dashboard : Fragment(), OnMapReadyCallback {
                 .position(sydney)
                 .title("Marker in Sydney")
         )
-        enableMyLocation()
+
     }
     private fun enableMyLocation() {
         // 1. Check if permissions are granted, if so, enable the my location layer

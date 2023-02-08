@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mainnavi"
+    app:startDestination="@id/addDeviceWithScanResultForm">
+
+    <fragment
+        android:id="@+id/dashboard"
+        android:name="com.example.m2ivocabo.Dashboard"
+        android:label="fragment_dashboard"
+        tools:layout="@layout/fragment_dashboard" >
+        <action
+            android:id="@+id/action_dashboard_to_addDeviceChooseType"
+            app:destination="@id/addDeviceChooseType" />
+    </fragment>
+    <fragment
+        android:id="@+id/addDeviceChooseType"
+        android:name="com.example.m2ivocabo.AddDeviceChooseType"
+        android:label="AddDeviceChooseType" >
+        <action
+            android:id="@+id/action_addDeviceChooseType_to_addDeviceWithScanResultForm"
+            app:destination="@id/addDeviceWithScanResultForm" />
+    </fragment>
+    <fragment
+        android:id="@+id/addDeviceWithScanResultForm"
+        android:name="com.example.m2ivocabo.AddDeviceWithScanResultForm"
+        android:label="fragment_add_device_with_scan_result_form"
+        tools:layout="@layout/fragment_add_device_with_scan_result_form" >
+        <action
+            android:id="@+id/action_addDeviceWithScanResultForm_to_dashboard"
+            app:destination="@id/dashboard" />
+    </fragment>
+</navigation>
