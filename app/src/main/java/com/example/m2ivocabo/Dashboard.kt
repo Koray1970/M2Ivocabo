@@ -1,18 +1,14 @@
 package com.example.m2ivocabo
 
-import android.Manifest
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.location.Location
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.*
 import android.widget.Button
-import android.widget.ListView
 import android.widget.Toast
 import androidx.annotation.RequiresPermission
 import androidx.appcompat.app.AlertDialog
@@ -20,27 +16,29 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.replace
-import androidx.fragment.app.setFragmentResult
+import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.example.m2ivocabo.databinding.FragmentDashboardBinding
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.LocationSource
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
-import com.google.android.gms.tasks.CancellationToken
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanIntentResult
 import com.journeyapps.barcodescanner.ScanOptions
+import kotlin.math.absoluteValue
+
 
 /**
  * An example full-screen fragment that shows and hides the system UI (i.e.
@@ -86,7 +84,6 @@ class Dashboard : Fragment(), OnMapReadyCallback {
     }
 
 
-
     private var _binding: FragmentDashboardBinding? = null
 
     // This property is only valid between onCreateView and
@@ -103,7 +100,9 @@ class Dashboard : Fragment(), OnMapReadyCallback {
     private var latlng: LatLng? = null
     private var fusedLocationProviderClient: FusedLocationProviderClient? = null
     private val LOCATION_PERMISSION_REQUEST_CODE = 100
-    private val gson=Gson()
+    private val gson = Gson()
+    var adapter :DeviceRecyclerViewAdapter?=null
+    var rvdevice:RecyclerView?=null
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -118,8 +117,10 @@ class Dashboard : Fragment(), OnMapReadyCallback {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         MaterialAlertDialogBuilder_OnInit()
-        fusedLocationProviderClient= LocationServices.getFusedLocationProviderClient(this.requireActivity())
-        val mapFragment = this.requireActivity().supportFragmentManager.findFragmentById(R.id.map) as? SupportMapFragment
+        fusedLocationProviderClient =
+            LocationServices.getFusedLocationProviderClient(this.requireActivity())
+        val mapFragment =
+            this.requireActivity().supportFragmentManager.findFragmentById(R.id.map) as? SupportMapFragment
         mapFragment?.getMapAsync(this)
 
         GetDeviceList_OnInit()
@@ -218,24 +219,37 @@ class Dashboard : Fragment(), OnMapReadyCallback {
 
     //start::Barcode Scanner event init
     @SuppressLint("MissingPermission")
-    @RequiresPermission(anyOf = arrayOf(android.Manifest.permission.ACCESS_COARSE_LOCATION,android.Manifest.permission.ACCESS_FINE_LOCATION))
+    @RequiresPermission(
+        anyOf = arrayOf(
+            android.Manifest.permission.ACCESS_COARSE_LOCATION,
+            android.Manifest.permission.ACCESS_FINE_LOCATION
+        )
+    )
     private val barcodeLauncher = registerForActivityResult(
         ScanContract()
     ) { result: ScanIntentResult ->
         if (result.contents == null) {
             Toast.makeText(this.requireActivity(), "Cancelled", Toast.LENGTH_LONG).show()
         } else {
-            if(ActivityCompat.checkSelfPermission(requireContext() ,android.Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED
-                && ActivityCompat.checkSelfPermission(requireContext() ,android.Manifest.permission.ACCESS_COARSE_LOCATION)==PackageManager.PERMISSION_GRANTED
+            if (ActivityCompat.checkSelfPermission(
+                    requireContext(),
+                    android.Manifest.permission.ACCESS_FINE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(
+                    requireContext(),
+                    android.Manifest.permission.ACCESS_COARSE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED
             ) {
                 fusedLocationProviderClient?.getCurrentLocation(
                     Priority.PRIORITY_BALANCED_POWER_ACCURACY,
-                    CancellationTokenSource().token)
+                    CancellationTokenSource().token
+                )
                     ?.addOnCompleteListener(OnCompleteListener {
-                        var intent = Intent(this.requireContext(), AddDeviceWithScanResultForm::class.java)
+                        var intent =
+                            Intent(this.requireContext(), AddDeviceWithScanResultForm::class.java)
                         intent.putExtra("macaddress", result.contents)
-                        latlng= LatLng(it.result.latitude,it.result.longitude)
-                        var _latlng=gson.toJson(latlng)
+                        latlng = LatLng(it.result.latitude, it.result.longitude)
+                        var _latlng = gson.toJson(latlng)
                         intent.putExtra("latlng", _latlng)
                         val bundle = Bundle()
                         bundle.putString("macaddress", result.contents)
@@ -246,16 +260,15 @@ class Dashboard : Fragment(), OnMapReadyCallback {
                         val fragmentTransaction =
                             this.requireActivity().supportFragmentManager.beginTransaction()
                         fragmentTransaction.add(
-                                R.id.flmainframe,
-                                addDeviceWithScanResultForm,
-                                "AddDeviceScanResultForm"
+                            R.id.flmainframe,
+                            addDeviceWithScanResultForm,
+                            "AddDeviceScanResultForm"
                         )
                         fragmentTransaction.addToBackStack(null)
                         fragmentTransaction.commit()
                     })
 
-            }
-            else{
+            } else {
                 shouldShowRequestPermissionRationale(android.Manifest.permission.ACCESS_FINE_LOCATION)
             }
         }
@@ -287,7 +300,8 @@ class Dashboard : Fragment(), OnMapReadyCallback {
     //end::Barcode Scanner event init
     //start::MaterialAlertDialog events
     fun MaterialAlertDialogBuilder_OnInit() {
-        var addDeviceChooseType = layoutInflater.inflate(R.layout.fragment_add_device_choose_type, null)
+        var addDeviceChooseType =
+            layoutInflater.inflate(R.layout.fragment_add_device_choose_type, null)
 
         var btnscancode: Button =
             addDeviceChooseType.findViewById<Button>(R.id.btnchoosescan)
@@ -299,7 +313,7 @@ class Dashboard : Fragment(), OnMapReadyCallback {
         btnaddbeacon = this.view?.findViewById(R.id.btnaddbeacon) as Button
         btnaddbeacon!!.setOnClickListener {
             addBeaconBuilder =
-                MaterialAlertDialogBuilder(this.requireContext(),R.style.appAlertDialogStyle )
+                MaterialAlertDialogBuilder(this.requireContext(), R.style.appAlertDialogStyle)
                     .setView(addDeviceChooseType)
                     //.setNegativeButton("Cancel", null)
                     .setOnDismissListener(DialogInterface.OnDismissListener {
@@ -324,6 +338,7 @@ class Dashboard : Fragment(), OnMapReadyCallback {
         )
 
     }
+
     private fun enableMyLocation() {
         // 1. Check if permissions are granted, if so, enable the my location layer
         if (ContextCompat.checkSelfPermission(
@@ -362,14 +377,33 @@ class Dashboard : Fragment(), OnMapReadyCallback {
             LOCATION_PERMISSION_REQUEST_CODE
         )
     }
-    fun GetDeviceList_OnInit(){
-        var dbDeviceHelper=DBDeviceHelper(requireContext())
-        val devicelist=dbDeviceHelper.deviceList()
-        if(devicelist!=null && devicelist.size>0){
-            val rvdevice=requireActivity().findViewById<ListView>(R.id.rcvdevicelist)
-            val adapter=DeviceListAdapter(requireContext(),devicelist)
-            rvdevice.adapter=adapter
-            adapter.notifyDataSetChanged()
+
+    fun GetDeviceList_OnInit() {
+        var dbDeviceHelper = DBDeviceHelper(requireContext())
+        val devicelist = dbDeviceHelper.deviceList()
+        if (devicelist != null && devicelist.size > 0) {
+            adapter = DeviceRecyclerViewAdapter(requireContext(),devicelist)
+            rvdevice = requireActivity().findViewById<RecyclerView>(R.id.rcvdevicelist)
+            rvdevice?.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false)
+
+            rvdevice?.adapter = adapter
+            adapter?.notifyDataSetChanged()
+            enableSwipeToDeleteAndUndo()
+
+
+
+            //mIth.attachToRecyclerView(rvdevice)
         }
+    }
+    private fun enableSwipeToDeleteAndUndo() {
+        val swipeToDeleteCallback: SwipeToDeleteCallback = object : SwipeToDeleteCallback(requireContext()) {
+            override fun onSwiped(viewHolder: ViewHolder, i: Int) {
+                val position = viewHolder.adapterPosition
+                val item: DeviceItem = adapter!!.getData()!!.get(position)
+                item.id?.let { adapter!!.removeItem(position, it) }
+            }
+        }
+        val itemTouchhelper = ItemTouchHelper(swipeToDeleteCallback)
+        itemTouchhelper.attachToRecyclerView(rvdevice)
     }
 }

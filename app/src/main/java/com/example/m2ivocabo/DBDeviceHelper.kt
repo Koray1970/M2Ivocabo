@@ -7,10 +7,11 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.view.ViewDebug.IntToString
 import androidx.annotation.Nullable
+
 //, factory: SQLiteDatabase.CursorFactory?
 class DBDeviceHelper(context: Context) :
     SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
-    var _context=context
+    var _context = context
     override fun onCreate(db: SQLiteDatabase?) {
         val query = ("CREATE TABLE " + TABLE_NAME + " (" +
                 ID + " INTEGER PRIMARY KEY , " +
@@ -22,7 +23,7 @@ class DBDeviceHelper(context: Context) :
     }
 
     override fun onUpgrade(db: SQLiteDatabase?, p1: Int, p2: Int) {
-        db?.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME)
+        db?.execSQL("DROP TABLE IF EXISTS $TABLE_NAME")
         onCreate(db)
     }
 
@@ -51,27 +52,27 @@ class DBDeviceHelper(context: Context) :
 
     fun deleteDevice(id: Int) {
         val db = this.writableDatabase
-        db.delete(TABLE_NAME, "id=$id", arrayOf("id"))
+        db.delete(TABLE_NAME, "$ID = $id", null)
         db.close()
     }
 
     fun deviceList(): ArrayList<DeviceItem>? {
         val deviceitems: ArrayList<DeviceItem> = ArrayList<DeviceItem>()
         val db = this.readableDatabase
-        var dbset = db.rawQuery("SELECT * FROM " + TABLE_NAME + " ORDER BY name ASC", null)
+        var dbset = db.rawQuery("SELECT * FROM $TABLE_NAME ORDER BY name ASC", null)
         dbset.moveToFirst()
         if (dbset != null) {
             try {
 
-                val cl_id=getColumnIndex(dbset, ID)
-                val cl_name=getColumnIndex(dbset, NAME)
-                var cl_code=getColumnIndex(dbset, CODE)
-                var cl_codetype=getColumnIndex(dbset, CODETYPE)
-                val cl_latlng=getColumnIndex(dbset, LATLNG)
+                val cl_id = getColumnIndex(dbset, ID)
+                val cl_name = getColumnIndex(dbset, NAME)
+                var cl_code = getColumnIndex(dbset, CODE)
+                var cl_codetype = getColumnIndex(dbset, CODETYPE)
+                val cl_latlng = getColumnIndex(dbset, LATLNG)
                 do {
                     var deviceItem = DeviceItem(
-                        id=dbset.getInt(cl_id),
-                        name=dbset.getString(cl_name),
+                        id = dbset.getInt(cl_id),
+                        name = dbset.getString(cl_name),
                         code = dbset.getString(cl_code),
                         codetype = DeviceCodeType.values().get(dbset.getInt(cl_codetype)),
                         latlng = dbset.getString(cl_latlng)
@@ -81,10 +82,10 @@ class DBDeviceHelper(context: Context) :
                 } while (dbset.moveToNext())
 
             } catch (exception: Exception) {
-                var error=exception.message
+                var error = exception.message
             } finally {
                 dbset.close()
-                if(deviceitems.size>0)
+                if (deviceitems.size > 0)
                     return deviceitems
             }
 
