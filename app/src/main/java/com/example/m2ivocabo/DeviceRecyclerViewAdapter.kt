@@ -24,6 +24,7 @@ class DeviceRecyclerViewAdapter(val context:Context ,val devicelist: ArrayList<D
                 txtdevicecode.text=itm.code
                 txtdevicename.text=itm.name
                 itemView.setOnClickListener {
+                    it.context.applicationContext.stopService(MainActivity.locationIntent)
                     val intent = Intent(it.context, BLEDeviceActionForm::class.java)
                     intent.putExtra("id", itm.id);
                     it.context.startActivity(intent)

@@ -298,44 +298,7 @@ class Dashboard : Fragment() {
     //end::MaterialAlertDialog events
 
 
-    /*private fun enableMyLocation() {
-        // 1. Check if permissions are granted, if so, enable the my location layer
-        if (ContextCompat.checkSelfPermission(
-                this.requireActivity(),
-                android.Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED ||
-            ContextCompat.checkSelfPermission(
-                this.requireActivity(),
-                android.Manifest.permission.ACCESS_COARSE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
-            map.isMyLocationEnabled = true
-            return
-        } // 2. If if a permission rationale dialog should be shown
-        if (ActivityCompat.shouldShowRequestPermissionRationale(
-                this.requireActivity(),
-                android.Manifest.permission.ACCESS_FINE_LOCATION
-            ) || ActivityCompat.shouldShowRequestPermissionRationale(
-                this.requireActivity(),
-                android.Manifest.permission.ACCESS_COARSE_LOCATION
-            )
-        ) {
-            PermissionUtils.RationaleDialog.newInstance(
-                LOCATION_PERMISSION_REQUEST_CODE, true
-            ).show(this.requireActivity().supportFragmentManager, "dialog")
-            return
-        }
 
-        // 3. Otherwise, request permission
-        ActivityCompat.requestPermissions(
-            this.requireActivity(),
-            arrayOf(
-                android.Manifest.permission.ACCESS_FINE_LOCATION,
-                android.Manifest.permission.ACCESS_COARSE_LOCATION
-            ),
-            LOCATION_PERMISSION_REQUEST_CODE
-        )
-    }*/
 
     fun GetDeviceList_OnInit() {
         var dbDeviceHelper = DBDeviceHelper(requireContext())
@@ -349,9 +312,6 @@ class Dashboard : Fragment() {
             rvdevice?.adapter = adapter
             adapter?.notifyDataSetChanged()
             enableSwipeToDeleteAndUndo()
-
-
-            //mIth.attachToRecyclerView(rvdevice)
         }
     }
 
