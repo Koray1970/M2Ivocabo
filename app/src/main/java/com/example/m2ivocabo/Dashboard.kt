@@ -21,30 +21,19 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
 import com.example.m2ivocabo.databinding.FragmentDashboardBinding
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.Priority
-import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.OnMapReadyCallback
-import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
-import com.google.android.gms.tasks.CancellationTokenSource
-import com.google.android.gms.tasks.OnCompleteListener
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanIntentResult
 import com.journeyapps.barcodescanner.ScanOptions
-import kotlin.math.absoluteValue
 
 
 /**
  * An example full-screen fragment that shows and hides the system UI (i.e.
  * status bar and navigation/system bar) with user interaction.
  */
-class Dashboard : Fragment(), OnMapReadyCallback {
+class Dashboard : Fragment() {
     private val hideHandler = Handler(Looper.myLooper()!!)
 
     @Suppress("InlinedApi")
@@ -91,18 +80,7 @@ class Dashboard : Fragment(), OnMapReadyCallback {
     private val binding get() = _binding!!
 
     private var permissionDenied = false
-    private lateinit var map: GoogleMap
-    private var scanOptions: ScanOptions? = null
-    private var btnaddbeacon: Button? = null
-    var addBeaconBuilder: MaterialAlertDialogBuilder? = null
-    var addBeaconDialog: AlertDialog? = null
 
-    private var latlng: LatLng? = null
-    private var fusedLocationProviderClient: FusedLocationProviderClient? = null
-    private val LOCATION_PERMISSION_REQUEST_CODE = 100
-    private val gson = Gson()
-    var adapter :DeviceRecyclerViewAdapter?=null
-    var rvdevice:RecyclerView?=null
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -117,12 +95,6 @@ class Dashboard : Fragment(), OnMapReadyCallback {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         MaterialAlertDialogBuilder_OnInit()
-        fusedLocationProviderClient =
-            LocationServices.getFusedLocationProviderClient(this.requireActivity())
-        val mapFragment =
-            this.requireActivity().supportFragmentManager.findFragmentById(R.id.map) as? SupportMapFragment
-        mapFragment?.getMapAsync(this)
-
         GetDeviceList_OnInit()
         visible = true
 
@@ -192,6 +164,8 @@ class Dashboard : Fragment(), OnMapReadyCallback {
     }
 
     companion object {
+        var TAG: String = Dashboard::class.java.simpleName
+
         /**
          * Whether or not the system UI should be auto-hidden after
          * [AUTO_HIDE_DELAY_MILLIS] milliseconds.
@@ -209,6 +183,18 @@ class Dashboard : Fragment(), OnMapReadyCallback {
          * and a change of the status and navigation bar.
          */
         private const val UI_ANIMATION_DELAY = 300
+
+        private var scanOptions: ScanOptions? = null
+        private var btnaddbeacon: Button? = null
+        var addBeaconBuilder: MaterialAlertDialogBuilder? = null
+        var addBeaconDialog: AlertDialog? = null
+
+        var latlng: LatLng? = null
+
+        private val LOCATION_PERMISSION_REQUEST_CODE = 100
+        private val gson = Gson()
+        var adapter: DeviceRecyclerViewAdapter? = null
+        var rvdevice: RecyclerView? = null
     }
 
     override fun onDestroyView() {
@@ -231,45 +217,29 @@ class Dashboard : Fragment(), OnMapReadyCallback {
         if (result.contents == null) {
             Toast.makeText(this.requireActivity(), "Cancelled", Toast.LENGTH_LONG).show()
         } else {
-            if (ActivityCompat.checkSelfPermission(
-                    requireContext(),
-                    android.Manifest.permission.ACCESS_FINE_LOCATION
-                ) == PackageManager.PERMISSION_GRANTED
-                && ActivityCompat.checkSelfPermission(
-                    requireContext(),
-                    android.Manifest.permission.ACCESS_COARSE_LOCATION
-                ) == PackageManager.PERMISSION_GRANTED
-            ) {
-                fusedLocationProviderClient?.getCurrentLocation(
-                    Priority.PRIORITY_BALANCED_POWER_ACCURACY,
-                    CancellationTokenSource().token
+            if (latlng != null) {
+                var intent =
+                    Intent(this.requireContext(), AddDeviceWithScanResultForm::class.java)
+                intent.putExtra("macaddress", result.contents)
+
+
+                var _latlng = gson.toJson(latlng)
+                intent.putExtra("latlng", _latlng)
+                val bundle = Bundle()
+                bundle.putString("macaddress", result.contents)
+                bundle.putString("latlng", _latlng)
+                var addDeviceWithScanResultForm = AddDeviceWithScanResultForm()
+                addDeviceWithScanResultForm.arguments = bundle
+
+                val fragmentTransaction =
+                    this.requireActivity().supportFragmentManager.beginTransaction()
+                fragmentTransaction.add(
+                    R.id.flmainframe,
+                    addDeviceWithScanResultForm,
+                    "AddDeviceScanResultForm"
                 )
-                    ?.addOnCompleteListener(OnCompleteListener {
-                        var intent =
-                            Intent(this.requireContext(), AddDeviceWithScanResultForm::class.java)
-                        intent.putExtra("macaddress", result.contents)
-                        latlng = LatLng(it.result.latitude, it.result.longitude)
-                        var _latlng = gson.toJson(latlng)
-                        intent.putExtra("latlng", _latlng)
-                        val bundle = Bundle()
-                        bundle.putString("macaddress", result.contents)
-                        bundle.putString("latlng", _latlng)
-                        var addDeviceWithScanResultForm = AddDeviceWithScanResultForm()
-                        addDeviceWithScanResultForm.arguments = bundle
-
-                        val fragmentTransaction =
-                            this.requireActivity().supportFragmentManager.beginTransaction()
-                        fragmentTransaction.add(
-                            R.id.flmainframe,
-                            addDeviceWithScanResultForm,
-                            "AddDeviceScanResultForm"
-                        )
-                        fragmentTransaction.addToBackStack(null)
-                        fragmentTransaction.commit()
-                    })
-
-            } else {
-                shouldShowRequestPermissionRationale(android.Manifest.permission.ACCESS_FINE_LOCATION)
+                fragmentTransaction.addToBackStack(null)
+                fragmentTransaction.commit()
             }
         }
     }
@@ -328,18 +298,7 @@ class Dashboard : Fragment(), OnMapReadyCallback {
     //end::MaterialAlertDialog events
 
 
-    override fun onMapReady(googleMap: GoogleMap) {
-        map = googleMap
-        val sydney = LatLng(-33.852, 151.211)
-        googleMap.addMarker(
-            MarkerOptions()
-                .position(sydney)
-                .title("Marker in Sydney")
-        )
-
-    }
-
-    private fun enableMyLocation() {
+    /*private fun enableMyLocation() {
         // 1. Check if permissions are granted, if so, enable the my location layer
         if (ContextCompat.checkSelfPermission(
                 this.requireActivity(),
@@ -376,34 +335,38 @@ class Dashboard : Fragment(), OnMapReadyCallback {
             ),
             LOCATION_PERMISSION_REQUEST_CODE
         )
-    }
+    }*/
 
     fun GetDeviceList_OnInit() {
         var dbDeviceHelper = DBDeviceHelper(requireContext())
         val devicelist = dbDeviceHelper.deviceList()
         if (devicelist != null && devicelist.size > 0) {
-            adapter = DeviceRecyclerViewAdapter(requireContext(),devicelist)
+            adapter = DeviceRecyclerViewAdapter(requireContext(), devicelist)
             rvdevice = requireActivity().findViewById<RecyclerView>(R.id.rcvdevicelist)
-            rvdevice?.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false)
+            rvdevice?.layoutManager =
+                LinearLayoutManager(requireContext(), LinearLayoutManager.VERTICAL, false)
 
             rvdevice?.adapter = adapter
             adapter?.notifyDataSetChanged()
             enableSwipeToDeleteAndUndo()
 
 
-
             //mIth.attachToRecyclerView(rvdevice)
         }
     }
+
     private fun enableSwipeToDeleteAndUndo() {
-        val swipeToDeleteCallback: SwipeToDeleteCallback = object : SwipeToDeleteCallback(requireContext()) {
-            override fun onSwiped(viewHolder: ViewHolder, i: Int) {
-                val position = viewHolder.adapterPosition
-                val item: DeviceItem = adapter!!.getData()!!.get(position)
-                item.id?.let { adapter!!.removeItem(position, it) }
+        val swipeToDeleteCallback: SwipeToDeleteCallback =
+            object : SwipeToDeleteCallback(requireContext()) {
+                override fun onSwiped(viewHolder: ViewHolder, i: Int) {
+                    val position = viewHolder.adapterPosition
+                    val item: DeviceItem = adapter!!.getData()!!.get(position)
+                    item.id?.let { adapter!!.removeItem(position, it) }
+                }
             }
-        }
         val itemTouchhelper = ItemTouchHelper(swipeToDeleteCallback)
         itemTouchhelper.attachToRecyclerView(rvdevice)
     }
+
+
 }
