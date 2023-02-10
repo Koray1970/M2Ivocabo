@@ -31,12 +31,9 @@ class AppLocationService : Service(), LocationListener {
             Toast.makeText(applicationContext, "GPS disabled!", Toast.LENGTH_SHORT).show()
         } else {
             if (application.checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                /*locationManager!!.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0f, this,
-                     Looper.myLooper())*/
-                locationManager!!.requestLocationUpdates(
-                    LocationManager.NETWORK_PROVIDER, 100, 0f, this,
-                    Looper.myLooper()
-                )
+                locationManager!!.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 240, 10f, this,
+                     Looper.myLooper())
+
             } else {
                 ActivityCompat.shouldShowRequestPermissionRationale(
                     Activity(),
@@ -56,6 +53,8 @@ class AppLocationService : Service(), LocationListener {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         return super.onStartCommand(intent, flags, startId)
+
+        return START_STICKY_COMPATIBILITY
     }
 
     override fun onUnbind(intent: Intent): Boolean {

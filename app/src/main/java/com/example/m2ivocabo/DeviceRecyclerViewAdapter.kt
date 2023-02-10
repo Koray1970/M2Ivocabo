@@ -60,6 +60,4 @@ class DeviceRecyclerViewAdapter(val context:Context ,val devicelist: ArrayList<D
     override fun onBindViewHolder(holder: ModelViewHolder, position: Int) {
         holder.bindItem(devicelist.get(position))
     }
-
-
 }
