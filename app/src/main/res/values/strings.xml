@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">M2Ivocabo</string>
+    <string name="app_name">IVOCABO</string>
     <string name="action_settings">Settings</string>
     <!-- Strings used for fragments for navigation -->
     <string name="btnscanqrcode">Scan QR</string>
@@ -25,4 +25,7 @@
     <string name="form_pleaseinputdevicename">Please input device name!</string>
     <string name="dummy_content">DUMMY\nCONTENT</string>
     <!--end::add device form items-->
+    <string name="dismissedlocationpermission_title">Location Permissions Service Not Set </string>
+    <string name="dismissedlocationpermission_message">Please check application location permission at device location services!</string>
+    <string name="locationnotavailable">Device cannot reach to current location!</string>
 </resources>

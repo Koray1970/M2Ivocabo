@@ -9,10 +9,12 @@ import android.location.LocationRequest
 import android.os.Build
 import android.os.Bundle
 import android.os.Looper
+import android.util.Log
 import android.view.ViewGroup
 import android.view.Window
 import android.widget.Button
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import androidx.appcompat.app.AlertDialog
@@ -26,9 +28,14 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.GoogleMap.CancelableCallback
+import com.google.android.gms.maps.GoogleMap.OnCameraIdleListener
+import com.google.android.gms.maps.GoogleMap.OnCameraMoveListener
+import com.google.android.gms.maps.GoogleMap.OnCameraMoveStartedListener
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.gson.Gson
@@ -37,10 +44,10 @@ import com.journeyapps.barcodescanner.ScanIntentResult
 import com.journeyapps.barcodescanner.ScanOptions
 
 
-class MainActivity : AppCompatActivity(),OnMapReadyCallback {
+class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     companion object {
-
+        var TAG: String = MainActivity::class.java.simpleName
         var locationIntent: Intent? = null
 
         private var scanOptions: ScanOptions? = null
@@ -48,7 +55,7 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback {
         var addBeaconBuilder: MaterialAlertDialogBuilder? = null
         var addBeaconDialog: AlertDialog? = null
 
-        var map: GoogleMap?=null
+        var map: GoogleMap? = null
         var mapFragment: SupportMapFragment? = null
 
         var latlng: LatLng? = null
@@ -57,7 +64,9 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback {
         private val gson = Gson()
         var adapter: DeviceRecyclerViewAdapter? = null
         var rvdevice: RecyclerView? = null
-
+        var mapmarker: Marker? = null
+        var ZOOM_LEVEL: Float = 20f
+        val googlemapCancelableCallback: CancelableCallback? = null
     }
 
     //@RequiresApi(Build.VERSION_CODES.S)
@@ -65,20 +74,54 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        locationIntent = Intent(this@MainActivity, AppLocationService::class.java)
-        startService(locationIntent);
-
-
-        LocalBroadcastManager.getInstance(this@MainActivity).registerReceiver(AppLocationServiceReceiver(),
-            IntentFilter("location")
+        locationPermissionRequest.launch(
+            arrayOf(
+                android.Manifest.permission.ACCESS_FINE_LOCATION,
+                android.Manifest.permission.ACCESS_COARSE_LOCATION
+            )
         )
+
 
 
         mapFragment = supportFragmentManager.findFragmentById(R.id.map) as? SupportMapFragment
         mapFragment?.getMapAsync(this)
         MaterialAlertDialogBuilder_OnInit()
         GetDeviceList_OnInit()
+
     }
+
+    val locationPermissionRequest = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        when {
+            (permissions.getOrDefault(android.Manifest.permission.ACCESS_FINE_LOCATION, false)
+                    || permissions.getOrDefault(
+                android.Manifest.permission.ACCESS_COARSE_LOCATION,
+                false
+            ))
+            -> {
+                // Precise location access granted.
+                // Only approximate location access granted.
+                locationIntent = Intent(this@MainActivity, AppLocationService::class.java)
+                startService(locationIntent);
+                LocalBroadcastManager.getInstance(this@MainActivity).registerReceiver(
+                    AppLocationServiceReceiver(),
+                    IntentFilter("location")
+                )
+            }
+            else -> {
+                MaterialAlertDialogBuilder(this, R.style.appAlertDialogStyle)
+                    .setTitle(R.string.dismissedlocationpermission_title)
+                    .setMessage(R.string.dismissedlocationpermission_message)
+                    .setPositiveButton(
+                        R.string.btnok,
+                        DialogInterface.OnClickListener { dialog, which ->
+                            shouldShowRequestPermissionRationale(android.Manifest.permission.ACCESS_FINE_LOCATION)
+                        })
+            }
+        }
+    }
+
 
     @RequiresPermission(
         allOf = arrayOf(
@@ -95,9 +138,13 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback {
         super.onResume()
         GetDeviceList_OnInit()
     }
+
     override fun onMapReady(googleMap: GoogleMap) {
-        map=googleMap
+        map = googleMap
+
+
     }
+
 
     //start::Barcode Scanner event init
     @SuppressLint("MissingPermission")
@@ -125,10 +172,10 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback {
     }
 
     private fun SetBarcodeScanning() {
-       scanOptions = ScanOptions()
+        scanOptions = ScanOptions()
         scanOptions!!.setDesiredBarcodeFormats(ScanOptions.QR_CODE)
         scanOptions!!.setPrompt("Scanning Barcode")
-       scanOptions!!.setCameraId(0)
+        scanOptions!!.setCameraId(0)
         scanOptions!!.setBarcodeImageEnabled(true)
         scanOptions!!.setBeepEnabled(true)
 
@@ -148,7 +195,7 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback {
     }
 
     //end::Barcode Scanner event init
-    //start::MaterialAlertDialog events
+//start::MaterialAlertDialog events
     fun MaterialAlertDialogBuilder_OnInit() {
         var addDeviceChooseType =
             layoutInflater.inflate(R.layout.fragment_add_device_choose_type, null)
@@ -174,11 +221,7 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback {
             addBeaconDialog!!.show()
         };
     }
-
-    //end::MaterialAlertDialog events
-
-
-
+//end::MaterialAlertDialog events
 
     fun GetDeviceList_OnInit() {
         var dbDeviceHelper = DBDeviceHelper(this)
@@ -209,17 +252,21 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback {
     }
 
 
-
-
-
     class AppLocationServiceReceiver : BroadcastReceiver() {
-        var gson= Gson()
+        var gson = Gson()
         override fun onReceive(context: Context?, intent: Intent?) {
-            var latLng=gson.fromJson( intent?.getStringExtra("loc"),LatLng::class.java)
-            latlng=latLng
-            latlng =latLng
-            map?.addMarker(MarkerOptions().position(latLng))
-            map?.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng,20f))
+            var latLng = gson.fromJson(intent?.getStringExtra("loc"), LatLng::class.java)
+            if (map?.cameraPosition!!.zoom >= ZOOM_LEVEL)
+                ZOOM_LEVEL = map?.cameraPosition!!.zoom
+            Log.v(TAG, "Zoom Level : " + ZOOM_LEVEL)
+            latlng = latLng
+            latlng = latLng
+            mapmarker?.remove()
+            mapmarker = map?.addMarker(MarkerOptions().position(latLng))
+
+            map?.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, ZOOM_LEVEL))
+
+
         }
     }
 }
