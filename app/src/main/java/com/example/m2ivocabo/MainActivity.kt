@@ -10,8 +10,10 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Looper
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.view.Window
+import android.view.WindowManager
 import android.widget.Button
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -37,11 +39,16 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.gson.Gson
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanIntentResult
 import com.journeyapps.barcodescanner.ScanOptions
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -81,13 +88,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             )
         )
 
-
-
         mapFragment = supportFragmentManager.findFragmentById(R.id.map) as? SupportMapFragment
         mapFragment?.getMapAsync(this)
         MaterialAlertDialogBuilder_OnInit()
         GetDeviceList_OnInit()
-
     }
 
     val locationPermissionRequest = registerForActivityResult(
@@ -102,8 +106,17 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             -> {
                 // Precise location access granted.
                 // Only approximate location access granted.
+                var getCurrentLocationAsync = GetCurrentLocationAsync()
+                var _loc: Location? = null
+                GlobalScope.launch {
+                    var currentLocation = async {getCurrentLocationAsync.CurrentLocationAsync(this@MainActivity) }.await()
+                    Thread.sleep(1000)
+                    _loc=getCurrentLocationAsync.loc
+                    Log.v(TAG, "current Location : " + _loc)
+                }
+
                 locationIntent = Intent(this@MainActivity, AppLocationService::class.java)
-                startService(locationIntent);
+                //startService(locationIntent);
                 LocalBroadcastManager.getInstance(this@MainActivity).registerReceiver(
                     AppLocationServiceReceiver(),
                     IntentFilter("location")
@@ -123,12 +136,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
 
-    @RequiresPermission(
-        allOf = arrayOf(
-            android.Manifest.permission.ACCESS_COARSE_LOCATION,
-            android.Manifest.permission.ACCESS_FINE_LOCATION
-        )
-    )
     override fun onDestroy() {
         super.onDestroy()
         stopService(locationIntent)
@@ -195,7 +202,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     //end::Barcode Scanner event init
-//start::MaterialAlertDialog events
+    // start::MaterialAlertDialog events
     fun MaterialAlertDialogBuilder_OnInit() {
         var addDeviceChooseType =
             layoutInflater.inflate(R.layout.fragment_add_device_choose_type, null)
@@ -209,7 +216,19 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
         btnaddbeacon = findViewById(R.id.btnaddbeacon) as Button
         btnaddbeacon!!.setOnClickListener {
-            addBeaconBuilder =
+            var bottomSheetDialog = BottomSheetDialog(
+                this@MainActivity,
+                com.google.android.material.R.style.Base_Theme_Material3_Dark_BottomSheetDialog
+            )
+            var bottomsheetviewgroup =
+                findViewById<ViewGroup>(R.id.choosedevicebottomSheetContainer)
+            var bottomSheetView = LayoutInflater.from(applicationContext)
+                .inflate(R.layout.fragment_add_device_choose_bottom_sheet, bottomsheetviewgroup)
+            bottomSheetDialog.setContentView(bottomSheetView)
+            bottomSheetDialog.show()
+
+
+            /*addBeaconBuilder =
                 MaterialAlertDialogBuilder(this, R.style.appAlertDialogStyle)
                     .setView(addDeviceChooseType)
                     //.setNegativeButton("Cancel", null)
@@ -218,7 +237,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     })
             addBeaconDialog = addBeaconBuilder!!.create()
             addBeaconDialog!!.requestWindowFeature(Window.FEATURE_NO_TITLE)
-            addBeaconDialog!!.show()
+            addBeaconDialog!!.show()*/
         };
     }
 //end::MaterialAlertDialog events
@@ -265,8 +284,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             mapmarker = map?.addMarker(MarkerOptions().position(latLng))
 
             map?.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, ZOOM_LEVEL))
-
-
         }
     }
 }

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    style="@style/Widget.Material3.BottomSheet"
+    android:id="@+id/choosedevicebottomSheetContainer"
+    android:gravity="center"
+    android:background="@color/md_theme_dark_surfaceVariant">
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <Button
+            android:id="@+id/btnchoosescan"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="15dp"
+            android:text="@string/btnscanqrcode" />
+
+        <Button
+            android:id="@+id/btnchoosemacaddress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/btnmacaddress" />
+    </LinearLayout>
+</RelativeLayout>

@@ -57,5 +57,4 @@
             android:screenOrientation="fullSensor"
             tools:replace="screenOrientation" />
     </application>
-
 </manifest>
