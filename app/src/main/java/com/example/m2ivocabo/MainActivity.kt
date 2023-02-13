@@ -80,7 +80,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
+        mapFragment = supportFragmentManager.findFragmentById(R.id.map) as? SupportMapFragment
+        mapFragment?.getMapAsync(this)
         locationPermissionRequest.launch(
             arrayOf(
                 android.Manifest.permission.ACCESS_FINE_LOCATION,
@@ -88,8 +89,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             )
         )
 
-        mapFragment = supportFragmentManager.findFragmentById(R.id.map) as? SupportMapFragment
-        mapFragment?.getMapAsync(this)
+
         MaterialAlertDialogBuilder_OnInit()
         GetDeviceList_OnInit()
     }
@@ -104,23 +104,18 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 false
             ))
             -> {
-                // Precise location access granted.
-                // Only approximate location access granted.
-                var getCurrentLocationAsync = GetCurrentLocationAsync()
-                var _loc: Location? = null
-                GlobalScope.launch {
-                    var currentLocation = async {getCurrentLocationAsync.CurrentLocationAsync(this@MainActivity) }.await()
-                    Thread.sleep(1000)
-                    _loc=getCurrentLocationAsync.loc
-                    Log.v(TAG, "current Location : " + _loc)
-                }
 
-                locationIntent = Intent(this@MainActivity, AppLocationService::class.java)
-                //startService(locationIntent);
-                LocalBroadcastManager.getInstance(this@MainActivity).registerReceiver(
-                    AppLocationServiceReceiver(),
-                    IntentFilter("location")
-                )
+                var getCurrentLocationAsync = GetCurrentLocationAsync()
+                GlobalScope.launch {
+                    var currentLocation =
+                        async { getCurrentLocationAsync.CurrentLocation_Result(this@MainActivity) }
+                    Thread.sleep(1000)
+                    latlng = getCurrentLocationAsync.latLng
+                    if (latlng != null) {
+                        map_OnPrepare()
+                        Log.v(TAG, "current Location : " + gson.toJson(latlng))
+                    }
+                }
             }
             else -> {
                 MaterialAlertDialogBuilder(this, R.style.appAlertDialogStyle)
@@ -135,6 +130,16 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
+    private fun map_OnPrepare() {
+        if (map?.cameraPosition!!.zoom >= ZOOM_LEVEL)
+            ZOOM_LEVEL = map?.cameraPosition!!.zoom
+        Log.v(TAG, "Zoom Level : " + ZOOM_LEVEL)
+
+        mapmarker?.remove()
+        mapmarker = map?.addMarker(MarkerOptions().position(latlng!!))
+
+        map?.animateCamera(CameraUpdateFactory.newLatLngZoom(latlng!!, ZOOM_LEVEL))
+    }
 
     override fun onDestroy() {
         super.onDestroy()
@@ -148,8 +153,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
-
-
     }
 
 
@@ -271,19 +274,4 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
 
-    class AppLocationServiceReceiver : BroadcastReceiver() {
-        var gson = Gson()
-        override fun onReceive(context: Context?, intent: Intent?) {
-            var latLng = gson.fromJson(intent?.getStringExtra("loc"), LatLng::class.java)
-            if (map?.cameraPosition!!.zoom >= ZOOM_LEVEL)
-                ZOOM_LEVEL = map?.cameraPosition!!.zoom
-            Log.v(TAG, "Zoom Level : " + ZOOM_LEVEL)
-            latlng = latLng
-            latlng = latLng
-            mapmarker?.remove()
-            mapmarker = map?.addMarker(MarkerOptions().position(latLng))
-
-            map?.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, ZOOM_LEVEL))
-        }
-    }
 }
