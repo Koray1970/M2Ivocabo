@@ -3,16 +3,18 @@ package com.example.m2ivocabo
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
+import android.widget.ProgressBar
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.work.OneTimeWorkRequest
-import androidx.work.WorkManager
-import androidx.work.WorkRequest
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.Observer
+import androidx.work.*
 import com.example.m2ivocabo.MainActivity.Companion.fusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
@@ -26,17 +28,21 @@ import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.gson.Gson
+import com.example.m2ivocabo.BLEServices.Companion.ARG_PROGRESS
+import java.util.UUID
+import java.util.concurrent.TimeUnit
 
 
-class BLEDeviceActionForm : AppCompatActivity(),OnMapReadyCallback {
-    companion object{
+class BLEDeviceActionForm : AppCompatActivity(), OnMapReadyCallback {
+
+    companion object {
         var TAG: String = BLEDeviceActionForm::class.java.simpleName
-        var map:GoogleMap?=null
-        var mapFragment:SupportMapFragment?=null
+        var map: GoogleMap? = null
+        var mapFragment: SupportMapFragment? = null
         var ZOOM_LEVEL: Float = 20f
         var mapmarker: Marker? = null
         var latlng: LatLng? = null
-        var btnTracking:Button?=null
+        var btnTracking: Button? = null
         private val gson = Gson()
     }
 
@@ -52,14 +58,31 @@ class BLEDeviceActionForm : AppCompatActivity(),OnMapReadyCallback {
         )
         mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         mapFragment?.getMapAsync(this)
-        btnTracking=findViewById(R.id.btntrack)
+        btnTracking = findViewById(R.id.btntrack)
         btnTracking!!.setOnClickListener {
-            val workManager = WorkManager.getInstance(applicationContext)
-            val request: WorkRequest = OneTimeWorkRequest.Builder(BLEServices::class.java).build()
-            workManager.enqueue(request)
-
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
+                || ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
+                runNotification()
+            } else {
+                notificationPermissionLauncher.launch(
+                    Manifest.permission.POST_NOTIFICATIONS
+                )
+            }
         }
+
+
     }
+
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) {
+        runNotification()
+    }
+
     private val locationPermissionRequest = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -84,6 +107,41 @@ class BLEDeviceActionForm : AppCompatActivity(),OnMapReadyCallback {
             }
         }
     }
+
+    private fun runNotification() {
+
+        val constraints = Constraints.Builder()
+            //.setRequiredNetworkType(NetworkType.CONNECTED)
+            //.setRequiresCharging(true)
+            .build()
+
+        //val request =  OneTimeWorkRequestBuilder<BLEServices>().build()
+        val prequest =PeriodicWorkRequestBuilder<BLEServices>(
+           1,
+            TimeUnit.MINUTES,
+            2,TimeUnit.MINUTES
+        )
+            .setConstraints(constraints)
+            .setBackoffCriteria(BackoffPolicy.LINEAR,PeriodicWorkRequest.MAX_BACKOFF_MILLIS,TimeUnit.MILLISECONDS)
+            .build()
+
+        val workManager = WorkManager.getInstance(applicationContext)
+
+        /*workManager.getWorkInfoByIdLiveData(request.id)
+             .observe(this, Observer { workInfo: WorkInfo? ->
+                 if (workInfo != null) {
+                     val progress = workInfo.progress
+                     val value = progress.getInt(ARG_PROGRESS, 0)
+
+                 }
+
+             })*/
+        Log.v(TAG, "Nofification Request id : " + prequest.id)
+        //workManager.enqueue(request)
+        var nname=UUID.randomUUID().toString()
+        workManager.enqueueUniquePeriodicWork("nname", ExistingPeriodicWorkPolicy.KEEP, prequest)
+    }
+
     private fun mapOnPrepare() {
         if (map?.cameraPosition!!.zoom >= ZOOM_LEVEL)
             ZOOM_LEVEL = map?.cameraPosition!!.zoom
@@ -96,10 +154,12 @@ class BLEDeviceActionForm : AppCompatActivity(),OnMapReadyCallback {
             CameraUpdateFactory.newLatLngZoom(
                 latlng!!,
                 ZOOM_LEVEL
-            ))
+            )
+        )
     }
+
     override fun onMapReady(googleMap: GoogleMap) {
-        map=googleMap
+        map = googleMap
     }
 
     //start::Current Location Init

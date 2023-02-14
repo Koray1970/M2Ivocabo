@@ -1,5 +1,6 @@
 package com.example.m2ivocabo
 
+import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
@@ -11,20 +12,30 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import kotlin.random.Random
 
+
 class BLEServices(context: Context, parameters: WorkerParameters):
     CoroutineWorker(context, parameters) {
 
-    private val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    private val notificationManager = context.getSystemService(NotificationManager::class.java)
+    private val notificationBuilder = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
+        .setSmallIcon(R.drawable.baseline_bluetooth_connected_white_24)
+        .setContentTitle("Important background job")
 
-
-
+    @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun doWork(): Result {
-        val progress = "Starting Download"
-        setForeground(createForegroundInfo(progress))
+        createChannel()
+        val notification = notificationBuilder.build()
+        val foregroundInfo = ForegroundInfo(NOTIFICATION_ID, notification)
+
+        setForeground(foregroundInfo)
+        createForegroundInfo()
+
+
         return Result.success()
     }
 
-    private fun createForegroundInfo(progress: String): ForegroundInfo {
+    @RequiresApi(Build.VERSION_CODES.O)
+    private suspend fun createForegroundInfo() {
         val id = applicationContext.getString(R.string.notification_channel_id)
         val title = applicationContext.getString(R.string.notification_title)
         val cancel = applicationContext.getString(R.string.btncancel)
@@ -32,28 +43,42 @@ class BLEServices(context: Context, parameters: WorkerParameters):
         val intent = WorkManager.getInstance(applicationContext)
             .createCancelPendingIntent(getId())
 
-        // Create a Notification channel if necessary
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            createChannel()
-        }
+        createChannel()
+
 
         val notification = NotificationCompat.Builder(applicationContext, id)
             .setContentTitle(title)
             .setTicker(title)
-            .setContentText(progress)
+            .setContentText("progress")
             .setSmallIcon(R.drawable.baseline_bluetooth_connected_white_24)
             .setOngoing(true)
             // Add the cancel action to the notification which can
             // be used to cancel the worker
             .addAction(android.R.drawable.ic_delete, cancel, intent)
             .build()
-        val notificationId= Random(10000)
-        return ForegroundInfo(notificationId.nextInt(), notification)
+        //val notificationId=150// Random(10000)
+        val foregroundInfo = ForegroundInfo(NOTIFICATION_ID, notification)
+        setForeground(foregroundInfo)
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
     private fun createChannel() {
-        // Create a Notification channel
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val notificationChannel = notificationManager?.getNotificationChannel(CHANNEL_ID)
+            if (notificationChannel == null) {
+                notificationManager?.createNotificationChannel(
+                    NotificationChannel(
+                        CHANNEL_ID, TAG, NotificationManager.IMPORTANCE_LOW
+                    )
+                )
+            }
+        }
+    }
+    companion object{
+        var NOTIFICATION_ID=150//Random(10000).nextInt()
+        const val ARG_PROGRESS = "Progress"
+        const val CHANNEL_ID = "Job progress"
+        const val TAG = "ForegroundWorker"
     }
 
 }
