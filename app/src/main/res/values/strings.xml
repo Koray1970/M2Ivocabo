@@ -28,4 +28,8 @@
     <string name="dismissedlocationpermission_title">Location Permissions Service Not Set </string>
     <string name="dismissedlocationpermission_message">Please check application location permission at device location services!</string>
     <string name="locationnotavailable">Device cannot reach to current location!</string>
+    <string name="btntracking">Tracking</string>
+    <string name="btnfind">Find</string>
+    <string name="notification_channel_id">Ivocabo Connection Service</string>
+    <string name="notification_title">Ivocabo Services</string>
 </resources>

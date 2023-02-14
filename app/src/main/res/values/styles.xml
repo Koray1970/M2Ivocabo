@@ -33,4 +33,12 @@
         <item name="android:textColor">@color/md_theme_light_surface</item>
         <item name="android:textSize">14dp</item>
     </style>
+    <style name="appblebuttons" parent="ThemeOverlay.Material3.Button">
+        <item name="android:backgroundTint">@color/md_theme_dark_scrim</item>
+        <item name="background">@color/md_theme_dark_scrim</item>
+        <item name="cornerSize">5dp</item>
+        <item name="cornerRadius">5dp</item>
+        <item name="android:radius">5dp</item>
+        <item name="android:innerRadius">5dp</item>
+    </style>
 </resources>

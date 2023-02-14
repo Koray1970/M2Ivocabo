@@ -1,27 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    style="@style/Widget.Material3.BottomSheet"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/choosedevicebottomSheetContainer"
-    android:gravity="center"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
     android:background="@color/md_theme_dark_surfaceVariant">
-    <LinearLayout
-        android:layout_width="wrap_content"
+
+    <RelativeLayout
+
+        style="@style/Widget.Material3.BottomSheet"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
 
-        <Button
-            android:id="@+id/btnchoosescan"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="15dp"
-            android:text="@string/btnscanqrcode" />
+        android:gravity="center">
 
-        <Button
-            android:id="@+id/btnchoosemacaddress"
-            android:layout_width="match_parent"
+        <LinearLayout
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/btnmacaddress" />
-    </LinearLayout>
-</RelativeLayout>
+            android:orientation="vertical">
+
+            <Button
+                android:id="@+id/btnchoosescan"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="15dp"
+                android:text="@string/btnscanqrcode" />
+
+            <Button
+                android:id="@+id/btnchoosemacaddress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/btnmacaddress" />
+        </LinearLayout>
+    </RelativeLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

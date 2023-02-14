@@ -25,14 +25,6 @@
         <activity
             android:name=".AddDeviceAfterScanResultForm"
             android:exported="false" />
-
-        <service
-            android:name=".AppLocationService"
-            android:enabled="true"
-            android:exported="true"
-            android:foregroundServiceType="location"
-            />
-
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
