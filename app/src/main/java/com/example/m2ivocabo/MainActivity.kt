@@ -183,11 +183,20 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 this@MainActivity,
                 com.google.android.material.R.style.Base_Theme_Material3_Dark_BottomSheetDialog
             )
+            //start::bottom sheet events
             val bottomsheetviewgroup =
                 findViewById<ViewGroup>(R.id.choosedevicebottomSheetContainer)
             val bottomSheetView = LayoutInflater.from(applicationContext)
                 .inflate(R.layout.fragment_add_device_choose_bottom_sheet, bottomsheetviewgroup)
             bottomSheetDialog.setContentView(bottomSheetView)
+
+            //start::Manual Device Add Form Button
+            val bntmanualdeviceadd=findViewById<Button>(R.id.btnMSubmit)
+            btnmanualdeviceadd.
+            //end::Manual Device Add Form Button
+
+
+
             val btnscancode: Button = bottomSheetView.findViewById(R.id.btnchoosescan)
             btnscancode.setOnClickListener {
                 setBarcodeScanning()
@@ -223,6 +232,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             addBeaconDialog!!.requestWindowFeature(Window.FEATURE_NO_TITLE)
             addBeaconDialog!!.show()*/
         }
+        //start::bottom sheet events
     }
 //end::MaterialAlertDialog events
 

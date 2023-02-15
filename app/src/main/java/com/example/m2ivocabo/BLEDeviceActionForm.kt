@@ -111,23 +111,24 @@ class BLEDeviceActionForm : AppCompatActivity(), OnMapReadyCallback {
     private fun runNotification() {
 
         val constraints = Constraints.Builder()
-            //.setRequiredNetworkType(NetworkType.CONNECTED)
-            //.setRequiresCharging(true)
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .setRequiresCharging(true)
             .build()
 
-        //val request =  OneTimeWorkRequestBuilder<BLEServices>().build()
-        val prequest =PeriodicWorkRequestBuilder<BLEServices>(
-           1,
-            TimeUnit.MINUTES,
-            2,TimeUnit.MINUTES
+        val request =  OneTimeWorkRequestBuilder<BLEServices>().build()
+        /*val prequest =PeriodicWorkRequestBuilder<BLEServices>(
+           PeriodicWorkRequest.MIN_PERIODIC_INTERVAL_MILLIS,
+            TimeUnit.MILLISECONDS,
+            PeriodicWorkRequest.MIN_PERIODIC_FLEX_MILLIS,TimeUnit.MILLISECONDS
         )
             .setConstraints(constraints)
             .setBackoffCriteria(BackoffPolicy.LINEAR,PeriodicWorkRequest.MAX_BACKOFF_MILLIS,TimeUnit.MILLISECONDS)
-            .build()
+            .build()*/
 
         val workManager = WorkManager.getInstance(applicationContext)
 
-        /*workManager.getWorkInfoByIdLiveData(request.id)
+
+        /*workManager.getWorkInfoByIdLiveData(prequest.id)
              .observe(this, Observer { workInfo: WorkInfo? ->
                  if (workInfo != null) {
                      val progress = workInfo.progress
@@ -136,10 +137,10 @@ class BLEDeviceActionForm : AppCompatActivity(), OnMapReadyCallback {
                  }
 
              })*/
-        Log.v(TAG, "Nofification Request id : " + prequest.id)
-        //workManager.enqueue(request)
-        var nname=UUID.randomUUID().toString()
-        workManager.enqueueUniquePeriodicWork("nname", ExistingPeriodicWorkPolicy.KEEP, prequest)
+        //Log.v(TAG, "Nofification Request id : " + prequest.id)
+        workManager.enqueue(request)
+        //var nname=UUID.randomUUID().toString()
+        //workManager.enqueueUniquePeriodicWork("nname", ExistingPeriodicWorkPolicy.KEEP, prequest)
     }
 
     private fun mapOnPrepare() {

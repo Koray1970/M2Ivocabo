@@ -4,6 +4,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.work.CoroutineWorker
@@ -21,14 +22,17 @@ class BLEServices(context: Context, parameters: WorkerParameters):
         .setSmallIcon(R.drawable.baseline_bluetooth_connected_white_24)
         .setContentTitle("Important background job")
 
-    @RequiresApi(Build.VERSION_CODES.O)
+    //@RequiresApi(Build.VERSION_CODES.O)
     override suspend fun doWork(): Result {
-        createChannel()
-        val notification = notificationBuilder.build()
+        //createChannel()
+
+        Toast.makeText(applicationContext,"Selam",Toast.LENGTH_SHORT).show()
+
+       /* val notification = notificationBuilder.build()
         val foregroundInfo = ForegroundInfo(NOTIFICATION_ID, notification)
 
-        setForeground(foregroundInfo)
-        createForegroundInfo()
+        setForeground(foregroundInfo)*/
+        //createForegroundInfo()
 
 
         return Result.success()
@@ -56,7 +60,10 @@ class BLEServices(context: Context, parameters: WorkerParameters):
             // be used to cancel the worker
             .addAction(android.R.drawable.ic_delete, cancel, intent)
             .build()
+        notificationManager.notify(NOTIFICATION_ID,notification)
         //val notificationId=150// Random(10000)
+
+
         val foregroundInfo = ForegroundInfo(NOTIFICATION_ID, notification)
         setForeground(foregroundInfo)
     }
