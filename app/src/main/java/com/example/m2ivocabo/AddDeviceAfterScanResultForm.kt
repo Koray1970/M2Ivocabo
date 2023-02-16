@@ -3,6 +3,7 @@ package com.example.m2ivocabo
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import com.google.android.gms.maps.model.LatLng
@@ -23,45 +24,53 @@ class AddDeviceAfterScanResultForm : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_device_after_scan_result_form)
-
         intentMainActivity = Intent(this@AddDeviceAfterScanResultForm, MainActivity::class.java)
-        macaddress = intent.getStringExtra("macaddress")
-        macaddress = AppHelper().StringToMacaddress(macaddress.toString())
-        intentlatlng=intent.getStringExtra("latlng")
+
+        intentlatlng = intent.getStringExtra("latlng")
         latLng = gson.fromJson(intentlatlng, LatLng::class.java)
 
-
+        var ismanual = intent.getBooleanExtra("ismanual", false)
         var txtmacaddress = findViewById<EditText>(R.id.txtmacaddress)
         txtmacaddress.isClickable = false
-        txtmacaddress.isEnabled = false
-
-        txtmacaddress?.setText(macaddress)
-
+        txtmacaddress.isEnabled = ismanual
+        macaddress = intent.getStringExtra("macaddress")
+        if (macaddress != null) {
+            macaddress = AppHelper().StringToMacaddress(macaddress.toString())
+            txtmacaddress?.setText(macaddress)
+        }
         var txtdevicename = findViewById<EditText>(R.id.txtdevicename)
 
         var btnsubmit = findViewById<Button>(R.id.btnsubmit)
         btnsubmit.setOnClickListener {
+            var macaddressisvalid = false
             if (txtmacaddress.text.isNullOrEmpty() || txtdevicename.text.isNullOrEmpty()) {
                 if (txtmacaddress.text.isNullOrEmpty()) {
                     txtmacaddress.setError("no text")
+
                 }
                 if (txtdevicename.text.isNullOrEmpty()) {
                     var errormessage = R.string.form_pleaseinputdevicename.toString();
                     txtdevicename.setError(errormessage)
                 }
             } else {
-                var dbevent = DBDeviceHelper(this)
+                macaddressisvalid = AppHelper().CheckMacAddress(txtmacaddress.text.toString())
+                Log.v(TAG, "macaddressisvalid : $macaddressisvalid")
+                if (!macaddressisvalid)
+                    txtmacaddress.setError("Mac Address not well formatted!")
+                else {
 
-                dbevent.addDevice(
-                    DeviceItem(
-                        id = null,
-                        code = txtmacaddress.text.toString(),
-                        name = txtdevicename.text.toString(),
-                        codetype = DeviceCodeType.MACADDRESS,
-                        latlng = intentlatlng
+                    var dbevent = DBDeviceHelper(this)
+                    dbevent.addDevice(
+                        DeviceItem(
+                            id = null,
+                            code = txtmacaddress.text.toString(),
+                            name = txtdevicename.text.toString(),
+                            codetype = DeviceCodeType.MACADDRESS,
+                            latlng = intentlatlng
+                        )
                     )
-                )
-                startActivity(intentMainActivity)
+                    startActivity(intentMainActivity)
+                }
             }
         }
         var btncancel = findViewById<Button>(R.id.btncancel)

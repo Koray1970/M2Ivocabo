@@ -191,8 +191,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             bottomSheetDialog.setContentView(bottomSheetView)
 
             //start::Manual Device Add Form Button
-            val bntmanualdeviceadd=findViewById<Button>(R.id.btnMSubmit)
-            btnmanualdeviceadd.
+            val bntmanualdeviceadd:Button=bottomSheetView.findViewById(R.id.btnchoosemacaddress)
+            bntmanualdeviceadd.setOnClickListener{
+                var manualadddeviceformint=Intent(this@MainActivity,AddDeviceAfterScanResultForm::class.java)
+                manualadddeviceformint.putExtra("ismanual",true)
+                startActivity(manualadddeviceformint)
+            }
             //end::Manual Device Add Form Button
 
 

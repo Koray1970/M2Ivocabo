@@ -5,6 +5,8 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.widget.Button
 import android.widget.ProgressBar
@@ -60,18 +62,12 @@ class BLEDeviceActionForm : AppCompatActivity(), OnMapReadyCallback {
         mapFragment?.getMapAsync(this)
         btnTracking = findViewById(R.id.btntrack)
         btnTracking!!.setOnClickListener {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
-                || ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.POST_NOTIFICATIONS
-                ) == PackageManager.PERMISSION_GRANTED
-            ) {
-                runNotification()
-            } else {
-                notificationPermissionLauncher.launch(
-                    Manifest.permission.POST_NOTIFICATIONS
-                )
-            }
+
+
+            notificationPermissionLauncher.launch(
+                Manifest.permission.POST_NOTIFICATIONS
+            )
+
         }
 
 
@@ -80,7 +76,18 @@ class BLEDeviceActionForm : AppCompatActivity(), OnMapReadyCallback {
     private val notificationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) {
-        runNotification()
+        if (it)
+            runNotification()
+        else {
+            MaterialAlertDialogBuilder(applicationContext, R.style.appAlertDialogStyle)
+                .setTitle(R.string.dismissedlocationpermission_title)
+                .setMessage(R.string.dismissedlocationpermission_message)
+                .setPositiveButton(
+                    R.string.btnok
+                ) { _, _ ->
+                    shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)
+                }.show()
+        }
     }
 
     private val locationPermissionRequest = registerForActivityResult(
@@ -109,38 +116,21 @@ class BLEDeviceActionForm : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun runNotification() {
+        var myhandler = Handler(Looper.myLooper()!!)
+        val runnable=object:Runnable {
+            override fun run() {
+                val workdRequest = OneTimeWorkRequestBuilder<BLEServices>().build()
+                WorkManager.getInstance(applicationContext)
+                    .enqueue(workdRequest)
+                myhandler.postDelayed(this,2000)
+            }
 
-        val constraints = Constraints.Builder()
-            .setRequiredNetworkType(NetworkType.CONNECTED)
-            .setRequiresCharging(true)
-            .build()
+        }
 
-        val request =  OneTimeWorkRequestBuilder<BLEServices>().build()
-        /*val prequest =PeriodicWorkRequestBuilder<BLEServices>(
-           PeriodicWorkRequest.MIN_PERIODIC_INTERVAL_MILLIS,
-            TimeUnit.MILLISECONDS,
-            PeriodicWorkRequest.MIN_PERIODIC_FLEX_MILLIS,TimeUnit.MILLISECONDS
+
+        myhandler.post(
+            runnable
         )
-            .setConstraints(constraints)
-            .setBackoffCriteria(BackoffPolicy.LINEAR,PeriodicWorkRequest.MAX_BACKOFF_MILLIS,TimeUnit.MILLISECONDS)
-            .build()*/
-
-        val workManager = WorkManager.getInstance(applicationContext)
-
-
-        /*workManager.getWorkInfoByIdLiveData(prequest.id)
-             .observe(this, Observer { workInfo: WorkInfo? ->
-                 if (workInfo != null) {
-                     val progress = workInfo.progress
-                     val value = progress.getInt(ARG_PROGRESS, 0)
-
-                 }
-
-             })*/
-        //Log.v(TAG, "Nofification Request id : " + prequest.id)
-        workManager.enqueue(request)
-        //var nname=UUID.randomUUID().toString()
-        //workManager.enqueueUniquePeriodicWork("nname", ExistingPeriodicWorkPolicy.KEEP, prequest)
     }
 
     private fun mapOnPrepare() {
@@ -165,7 +155,8 @@ class BLEDeviceActionForm : AppCompatActivity(), OnMapReadyCallback {
 
     //start::Current Location Init
     private fun getCurrentLocation() {
-        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
+        fusedLocationProviderClient =
+            LocationServices.getFusedLocationProviderClient(this)
         if (ActivityCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -186,10 +177,12 @@ class BLEDeviceActionForm : AppCompatActivity(), OnMapReadyCallback {
     }
     //end::Current Location Init
 
-    private val onBackPressedCallback: OnBackPressedCallback =
+    private
+    val onBackPressedCallback: OnBackPressedCallback =
         object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                val i = Intent(this@BLEDeviceActionForm, MainActivity::class.java)
+                val i =
+                    Intent(this@BLEDeviceActionForm, MainActivity::class.java)
                 startActivity(i)
             }
         }

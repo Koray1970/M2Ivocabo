@@ -3,82 +3,63 @@ package com.example.m2ivocabo
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.content.Context.NOTIFICATION_SERVICE
 import android.os.Build
-import android.widget.Toast
+import android.provider.Settings.Global.getString
 import androidx.annotation.RequiresApi
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat.getSystemService
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
-import kotlin.random.Random
+import java.util.*
 
 
 class BLEServices(context: Context, parameters: WorkerParameters):
     CoroutineWorker(context, parameters) {
+    private val notificationManager =
+        context.getSystemService(Context.NOTIFICATION_SERVICE) as
+                NotificationManager
 
-    private val notificationManager = context.getSystemService(NotificationManager::class.java)
-    private val notificationBuilder = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
-        .setSmallIcon(R.drawable.baseline_bluetooth_connected_white_24)
-        .setContentTitle("Important background job")
-
-    //@RequiresApi(Build.VERSION_CODES.O)
     override suspend fun doWork(): Result {
-        //createChannel()
-
-        Toast.makeText(applicationContext,"Selam",Toast.LENGTH_SHORT).show()
-
-       /* val notification = notificationBuilder.build()
-        val foregroundInfo = ForegroundInfo(NOTIFICATION_ID, notification)
-
-        setForeground(foregroundInfo)*/
-        //createForegroundInfo()
-
-
+        val progress = "Starting Download"
+        setForeground(createForegroundInfo(progress))
         return Result.success()
     }
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    private suspend fun createForegroundInfo() {
-        val id = applicationContext.getString(R.string.notification_channel_id)
-        val title = applicationContext.getString(R.string.notification_title)
-        val cancel = applicationContext.getString(R.string.btncancel)
-        // This PendingIntent can be used to cancel the worker
+    private fun createForegroundInfo(progress: String): ForegroundInfo {
         val intent = WorkManager.getInstance(applicationContext)
-            .createCancelPendingIntent(getId())
-
-        createChannel()
-
-
-        val notification = NotificationCompat.Builder(applicationContext, id)
-            .setContentTitle(title)
-            .setTicker(title)
-            .setContentText("progress")
+            .createCancelPendingIntent(UUID.randomUUID())
+        // Create a Notification channel if necessary
+            createChannel()
+        val notification = NotificationCompat.Builder(applicationContext, "idNotification")
+            .setContentTitle("title")
+            .setTicker("title")
+            .setContentText(progress)
             .setSmallIcon(R.drawable.baseline_bluetooth_connected_white_24)
             .setOngoing(true)
+            .setChannelId(CHANNEL_ID)
             // Add the cancel action to the notification which can
             // be used to cancel the worker
-            .addAction(android.R.drawable.ic_delete, cancel, intent)
+            //.addAction(android.R.drawable.ic_delete, applicationContext.getString(R.string.btncancel), intent)
             .build()
-        notificationManager.notify(NOTIFICATION_ID,notification)
-        //val notificationId=150// Random(10000)
 
 
-        val foregroundInfo = ForegroundInfo(NOTIFICATION_ID, notification)
-        setForeground(foregroundInfo)
+        return ForegroundInfo(NOTIFICATION_ID, notification)
     }
-
-    @RequiresApi(Build.VERSION_CODES.O)
     private fun createChannel() {
+        // Create a Notification channel
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val notificationChannel = notificationManager?.getNotificationChannel(CHANNEL_ID)
-            if (notificationChannel == null) {
-                notificationManager?.createNotificationChannel(
-                    NotificationChannel(
-                        CHANNEL_ID, TAG, NotificationManager.IMPORTANCE_LOW
-                    )
-                )
-            }
+            // Create the NotificationChannel
+            val name = "Channel Name"//getString(R.string.channel_name)
+            val descriptionText = "Channel Description"//getString(R.string.channel_description)
+            val importance = NotificationManager.IMPORTANCE_HIGH// .IMPORTANCE_DEFAULT
+            val mChannel = NotificationChannel(CHANNEL_ID, name, importance)
+            mChannel.description = descriptionText
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this
+            notificationManager.createNotificationChannel(mChannel)
         }
     }
     companion object{

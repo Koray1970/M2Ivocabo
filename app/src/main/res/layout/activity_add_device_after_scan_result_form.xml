@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/md_theme_dark_scrim"
-    tools:context=".AddDeviceWithScanResultForm">
+    tools:context=".AddDeviceAfterScanResultForm">
 
     <!-- TODO: Update blank fragment layout -->
     <LinearLayout
@@ -34,7 +34,8 @@
             android:ems="10"
             android:clickable="false"
             android:textColor="@color/md_theme_light_surface"
-            android:inputType="textPersonName"
+            android:inputType="textCapCharacters"
+
             android:contentDescription="@string/form_macaddres"
             android:text="" />
 
