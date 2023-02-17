@@ -122,7 +122,7 @@ class BLEDeviceActionForm : AppCompatActivity(), OnMapReadyCallback {
                 val workdRequest = OneTimeWorkRequestBuilder<BLEServices>().build()
                 WorkManager.getInstance(applicationContext)
                     .enqueue(workdRequest)
-                myhandler.postDelayed(this,2000)
+                myhandler.postDelayed(this,16*1000)
             }
 
         }
