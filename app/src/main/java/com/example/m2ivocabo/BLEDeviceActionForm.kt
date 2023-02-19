@@ -1,6 +1,7 @@
 package com.example.m2ivocabo
 
 import android.Manifest
+import android.app.Notification
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -13,6 +14,7 @@ import android.widget.ProgressBar
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.runtime.mutableStateOf
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Observer
@@ -51,6 +53,17 @@ class BLEDeviceActionForm : AppCompatActivity(), OnMapReadyCallback {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_bledevice_action_form)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            mutableStateOf(
+                ContextCompat.checkSelfPermission(
+                    applicationContext,
+                    android.Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED
+            )
+        } else {
+            mutableStateOf(true)
+
+        }
         onBackPressedDispatcher.addCallback(onBackPressedCallback)
         locationPermissionRequest.launch(
             arrayOf(
@@ -69,8 +82,6 @@ class BLEDeviceActionForm : AppCompatActivity(), OnMapReadyCallback {
             )
 
         }
-
-
     }
 
     private val notificationPermissionLauncher = registerForActivityResult(
@@ -116,13 +127,14 @@ class BLEDeviceActionForm : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun runNotification() {
+
         var myhandler = Handler(Looper.myLooper()!!)
-        val runnable=object:Runnable {
+        val runnable = object : Runnable {
             override fun run() {
                 val workdRequest = OneTimeWorkRequestBuilder<BLEServices>().build()
                 WorkManager.getInstance(applicationContext)
                     .enqueue(workdRequest)
-                myhandler.postDelayed(this,16*1000)
+                myhandler.postDelayed(this, 16 * 1000)
             }
 
         }
