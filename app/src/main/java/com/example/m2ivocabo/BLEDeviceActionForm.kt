@@ -1,24 +1,21 @@
 package com.example.m2ivocabo
 
 import android.Manifest
-import android.app.Notification
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import android.widget.Button
-import android.widget.ProgressBar
+import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
+import androidx.annotation.RequiresPermission
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.runtime.mutableStateOf
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
-import androidx.lifecycle.Observer
-import androidx.work.*
 import com.example.m2ivocabo.MainActivity.Companion.fusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
@@ -32,121 +29,73 @@ import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.gson.Gson
-import com.example.m2ivocabo.BLEServices.Companion.ARG_PROGRESS
-import java.util.UUID
-import java.util.concurrent.TimeUnit
 
 
 class BLEDeviceActionForm : AppCompatActivity(), OnMapReadyCallback {
 
-    companion object {
-        var TAG: String = BLEDeviceActionForm::class.java.simpleName
-        var map: GoogleMap? = null
-        var mapFragment: SupportMapFragment? = null
-        var ZOOM_LEVEL: Float = 20f
-        var mapmarker: Marker? = null
-        var latlng: LatLng? = null
-        var btnTracking: Button? = null
-        private val gson = Gson()
-    }
 
+    @RequiresApi(Build.VERSION_CODES.O)
+    @RequiresPermission(
+        allOf = arrayOf(
+            android.Manifest.permission.BLUETOOTH_SCAN,
+            android.Manifest.permission.BLUETOOTH_CONNECT
+        )
+    )
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_bledevice_action_form)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            mutableStateOf(
-                ContextCompat.checkSelfPermission(
-                    applicationContext,
-                    android.Manifest.permission.POST_NOTIFICATIONS
-                ) == PackageManager.PERMISSION_GRANTED
+        onBackPressedDispatcher.addCallback(onBackPressedCallback)
+
+
+
+        var bluetoothManager: BluetoothManager = getSystemService(BluetoothManager::class.java)
+        var bluetoothAdapter = bluetoothManager.adapter
+        if (!bluetoothAdapter.isEnabled) {
+            val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+
+            ActivityCompat.startActivityForResult(
+                this,
+                enableBtIntent,
+                BluetoothTrackService.REQUEST_ENABLE_BT,
+                null
             )
         } else {
-            mutableStateOf(true)
-
+            //if (Build.VERSION.SDK_INT >= 31)
+                bluetoothscanpermissions.launch(
+                    ANDROID_12_BLE_PERMISSIONS
+                )
         }
-        onBackPressedDispatcher.addCallback(onBackPressedCallback)
-        locationPermissionRequest.launch(
-            arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            )
-        )
-        mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
-        mapFragment?.getMapAsync(this)
-        btnTracking = findViewById(R.id.btntrack)
+
+       /* mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
+        mapFragment?.getMapAsync(this)*/
+        btnTracking = findViewById<Button>(R.id.btntrack)
+        btnTracking!!.isClickable = false
         btnTracking!!.setOnClickListener {
-
-
-            notificationPermissionLauncher.launch(
-                Manifest.permission.POST_NOTIFICATIONS
-            )
-
-        }
-    }
-
-    private val notificationPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) {
-        if (it)
             runNotification()
-        else {
-            MaterialAlertDialogBuilder(applicationContext, R.style.appAlertDialogStyle)
-                .setTitle(R.string.dismissedlocationpermission_title)
-                .setMessage(R.string.dismissedlocationpermission_message)
-                .setPositiveButton(
-                    R.string.btnok
-                ) { _, _ ->
-                    shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)
-                }.show()
         }
+        getCurrentLocation()
     }
 
-    private val locationPermissionRequest = registerForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { permissions ->
-        when {
-            (permissions.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION, false)
-                    || permissions.getOrDefault(
-                Manifest.permission.ACCESS_COARSE_LOCATION,
-                false
-            ))
-            -> {
-                getCurrentLocation()
-            }
-            else -> {
-                MaterialAlertDialogBuilder(this, R.style.appAlertDialogStyle)
-                    .setTitle(R.string.dismissedlocationpermission_title)
-                    .setMessage(R.string.dismissedlocationpermission_message)
-                    .setPositiveButton(
-                        R.string.btnok
-                    ) { _, _ ->
-                        shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)
-                    }
+    val bluetoothscanpermissions =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+            when {
+                (permissions.getOrDefault(Manifest.permission.BLUETOOTH_SCAN, false)) -> {
+                    btnTracking!!.isClickable = true
+                    Toast.makeText(applicationContext, "Bluetooth tamam!!!", Toast.LENGTH_SHORT)
+                        .show()
+                }
             }
         }
-    }
 
+
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun runNotification() {
-
-        var myhandler = Handler(Looper.myLooper()!!)
-        val runnable = object : Runnable {
-            override fun run() {
-                val workdRequest = OneTimeWorkRequestBuilder<BLEServices>().build()
-                WorkManager.getInstance(applicationContext)
-                    .enqueue(workdRequest)
-                myhandler.postDelayed(this, 16 * 1000)
-            }
-
-        }
-
-
-        myhandler.post(
-            runnable
-        )
+        val intBleTrack = Intent(this@BLEDeviceActionForm, BluetoothTrackService::class.java)
+        startForegroundService(intBleTrack)
     }
 
     private fun mapOnPrepare() {
-        if (map?.cameraPosition!!.zoom >= ZOOM_LEVEL)
+        /*if (map?.cameraPosition!!.zoom >= ZOOM_LEVEL)
             ZOOM_LEVEL = map?.cameraPosition!!.zoom
         Log.v(TAG, "Zoom Level : ${ZOOM_LEVEL}")
 
@@ -158,7 +107,7 @@ class BLEDeviceActionForm : AppCompatActivity(), OnMapReadyCallback {
                 latlng!!,
                 ZOOM_LEVEL
             )
-        )
+        )*/
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
@@ -187,10 +136,9 @@ class BLEDeviceActionForm : AppCompatActivity(), OnMapReadyCallback {
                 }
         }
     }
-    //end::Current Location Init
+//end::Current Location Init
 
-    private
-    val onBackPressedCallback: OnBackPressedCallback =
+    private val onBackPressedCallback: OnBackPressedCallback =
         object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 val i =
@@ -198,4 +146,31 @@ class BLEDeviceActionForm : AppCompatActivity(), OnMapReadyCallback {
                 startActivity(i)
             }
         }
+
+    companion object {
+        var TAG: String = BLEDeviceActionForm::class.java.simpleName
+        var map: GoogleMap? = null
+        var mapFragment: SupportMapFragment? = null
+        var ZOOM_LEVEL: Float = 20f
+        var mapmarker: Marker? = null
+        var latlng: LatLng? = null
+        var btnTracking: Button? = null
+        private val BLE_PERMISSIONS = arrayOf(
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        )
+        private val ANDROID_12_BLE_PERMISSIONS = arrayOf(
+            Manifest.permission.BLUETOOTH_SCAN,
+            Manifest.permission.BLUETOOTH_CONNECT,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        )
+        private const val ANDROID_12_BLE_PERMISSIONSCODE = 200
+        private const val BLE_PERMISSIONSCODE = 205
+        private const val POST_NOTIFICATIONS_PERMISSIONCODE = 90
+        private const val BLUETOOTH_PERMISSIONCODE = 100
+        private const val BLUETOOTH_CONNECTION_PERMISSIONCODE = 110
+        private const val BLUETOOTH_SCAN_PERMISSIONCODE = 120
+
+        private val gson = Gson()
+    }
 }

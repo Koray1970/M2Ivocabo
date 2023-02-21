@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     tools:context=".BLEDeviceActionForm">
 
-    <fragment
+   <!-- <fragment
         android:id="@+id/map"
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="0dp"
@@ -16,7 +16,8 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:context="com.example.mapwithmarker.MapsMarkerActivity"
-        tools:ignore="MissingConstraints" />
+        android:visibility="invisible"
+        tools:ignore="MissingConstraints" />-->
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -38,6 +39,7 @@
             android:layout_weight="1"
             android:layout_marginRight="20dp"
             style="@style/appblebuttons"
+            android:clickable="false"
             android:text="@string/btntracking"
             android:drawableLeft="@drawable/baseline_location_on_24"
             />
@@ -49,6 +51,7 @@
             android:layout_weight="1"
             android:layout_marginLeft="20dp"
             style="@style/appblebuttons"
+            android:clickable="false"
             android:text="@string/btnfind"
             android:drawableLeft="@drawable/baseline_wifi_find_24"
             />

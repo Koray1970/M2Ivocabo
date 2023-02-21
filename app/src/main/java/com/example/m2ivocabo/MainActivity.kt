@@ -60,7 +60,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         var ZOOM_LEVEL: Float = 20f
     }
 
-    //@RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -89,7 +88,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             -> {
                 getCurrentLocation()
             }
-            else -> {
+            /*else -> {
                 MaterialAlertDialogBuilder(this, R.style.appAlertDialogStyle)
                     .setTitle(R.string.dismissedlocationpermission_title)
                     .setMessage(R.string.dismissedlocationpermission_message)
@@ -97,8 +96,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                         R.string.btnok
                     ) { _, _ ->
                         shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)
-                    }
-            }
+                    }.show()
+            }*/
         }
     }
 
