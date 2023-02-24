@@ -9,6 +9,7 @@ import android.bluetooth.BluetoothManager
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.IBinder
+import android.widget.Toast
 import androidx.annotation.RequiresPermission
 import androidx.core.app.ActivityCompat
 import androidx.core.app.ActivityCompat.requestPermissions
@@ -19,17 +20,10 @@ class BluetoothTrackService : Service() {
     override fun onCreate() {
         var bluetoothManager:BluetoothManager=getSystemService(BluetoothManager::class.java)
         bluetoothAdapter= bluetoothManager.adapter
-        if(applicationContext.checkSelfPermission(android.Manifest.permission.BLUETOOTH_SCAN)==PackageManager.PERMISSION_GRANTED) {
-            if (!bluetoothAdapter.isEnabled) {
-                val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-                var ractivity = application.baseContext as Activity
-                startActivityForResult(ractivity, enableBtIntent, REQUEST_ENABLE_BT, null)
-                stopSelf()
-            }
+        if(checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED){
+            Toast.makeText(applicationContext,"Herşey yolunda",Toast.LENGTH_SHORT).show()
         }
-        else{
-           ActivityCompat.requestPermissions(applicationContext as Activity, arrayOf(android.Manifest.permission.BLUETOOTH_SCAN,android.Manifest.permission.BLUETOOTH_CONNECT),100)
-        }
+
     }
 
 
